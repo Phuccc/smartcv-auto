@@ -1,0 +1,207 @@
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm transition-opacity" id="intv-modal-backdrop">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl transform transition-all flex flex-col max-h-[90vh] overflow-hidden" @click.stop="">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50">
+            <h3 class="text-lg font-bold text-slate-900">
+                {% if interview %}Sửa lịch phỏng vấn{% else %}Thêm lịch phỏng vấn{% endif %}
+            </h3>
+            <button onclick="document.getElementById('modal-container').innerHTML=''" class="text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-lg hover:bg-slate-200">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        
+        {% if interview %}
+        <form hx-post="/ui/interviews/{{ interview.id }}/update" 
+              hx-on::after-request="if(event.detail.successful) window.location.reload()"
+              class="flex flex-col overflow-hidden">
+        {% else %}
+        <form hx-post="/ui/interviews" 
+              hx-on::after-request="if(event.detail.successful) window.location.reload()"
+              class="flex flex-col overflow-hidden">
+        {% endif %}
+            <div class="p-6 overflow-y-auto custom-scrollbar" style="max-height: calc(90vh - 140px);">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5" x-data="{ type: '{{ interview.interview_type if interview else 'online' }}' }">
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-widest mb-2">Ứng viên <span class="text-red-500">*</span></label>
+                    <select name="candidate_id" required class="w-full px-4 py-2.5 rounded-lg border-slate-200 focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm font-medium">
+                        <option value="">-- Chọn ứng viên --</option>
+                        {% for cand in candidates %}
+                        <option value="{{ cand.id }}" {% if (interview and interview.candidate_id == cand.id) or (selected_candidate_id == cand.id) %}selected{% endif %}>{{ cand.full_name }} ({{ cand.job.title if cand.job else 'None' }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="md:col-span-1">
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-widest mb-2">Bắt đầu <span class="text-red-500">*</span></label>
+                    <input type="datetime-local" id="intv-start-time" name="scheduled_at" value="{{ interview.scheduled_at.strftime('%Y-%m-%dT%H:%M') if interview and interview.scheduled_at else '' }}" required class="w-full px-4 py-2.5 rounded-lg border-slate-200 focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm font-medium">
+                </div>
+                <!-- Alpine data to auto-calculate end_at based on scheduled_at -->
+                <div class="md:col-span-1" x-data="{
+                    updateEnd() {
+                        const startInput = document.getElementById('intv-start-time').value;
+                        if (startInput) {
+                            const d = new Date(startInput);
+                            d.setHours(d.getHours() + 1);
+                            
+                            // Format target string 'YYYY-MM-DDTHH:mm'
+                            const tzOffset = d.getTimezoneOffset() * 60000;
+                            const localISOTime = (new Date(d - tzOffset)).toISOString().slice(0,16);
+                            this.$refs.endInput.value = localISOTime;
+                        }
+                    }
+                }" x-init="
+                    document.getElementById('intv-start-time').addEventListener('change', updateEnd);
+                ">
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-widest mb-2">Kết thúc <span class="text-red-500">*</span></label>
+                    <input type="datetime-local" name="end_at" x-ref="endInput" value="{{ interview.end_at.strftime('%Y-%m-%dT%H:%M') if interview and interview.end_at else '' }}" required class="w-full px-4 py-2.5 rounded-lg border-slate-200 focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm font-medium">
+                </div>
+                
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-widest mb-2">Hình thức <span class="text-red-500">*</span></label>
+                    <select name="interview_type" x-model="type" required class="w-full px-4 py-2.5 rounded-lg border-slate-200 focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm font-medium">
+                        <option value="online">Online</option>
+                        <option value="offline">Offline</option>
+                    </select>
+                </div>
+                
+                <div class="md:col-span-2" x-show="type === 'offline'" x-transition>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-widest mb-2">Địa điểm chi tiết / Ghi chú địa điểm</label>
+                    <input type="text" name="location" value="{{ interview.location if interview else '' }}" :required="type === 'offline'" 
+                           class="w-full px-4 py-2.5 rounded-lg border-slate-200 focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm font-medium"
+                           placeholder="Địa chỉ văn phòng, phòng họp...">
+                </div>
+                
+                {# Hidden online_link field to keep it in the form data but out of the UI if necessary, or just not show it #}
+                <div x-show="false" class="hidden">
+                    <input type="hidden" name="online_link" value="{{ interview.online_link if interview else '' }}">
+                </div>
+                
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-widest mb-3">Người phỏng vấn</label>
+                    
+                    {% set selected_uids = [] %}
+                    {% if interview and interview.interviewers %}
+                        {% for iv in interview.interviewers %}
+                            {% set _ = selected_uids.append(iv.user_id) %}
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <div x-data="{
+                            open: false,
+                            search: '',
+                            selected: {{ selected_uids | tojson }},
+                            users: [
+                                {% for user in users %}
+                                    { id: {{ user.id }}, name: '{{ user.full_name }}' }{{ ',' if not loop.last }}
+                                {% endfor %}
+                            ],
+                            get filteredUsers() {
+                                if (this.search === '') {
+                                    return this.users;
+                                }
+                                return this.users.filter(u => u.name.toLowerCase().includes(this.search.toLowerCase()));
+                            },
+                            get selectedUsers() {
+                                return this.users.filter(u => this.selected.includes(u.id));
+                            },
+                            toggleUser(id) {
+                                if (this.selected.includes(id)) {
+                                    this.selected = this.selected.filter(i => i !== id);
+                                } else {
+                                    this.selected.push(id);
+                                }
+                            },
+                            removeUser(id) {
+                                this.selected = this.selected.filter(i => i !== id);
+                            }
+                        }"
+                        class="relative"
+                        @click.away="open = false"
+                    >
+                        <div class="flex flex-wrap gap-2 mb-2 min-h-[42px] p-2 bg-slate-50 border border-slate-200 rounded-lg cursor-pointer" @click="open = !open">
+                            <template x-for="user in selectedUsers" :key="user.id">
+                                <span class="inline-flex items-center gap-1 px-2.5 py-1 bg-primary/10 text-primary text-xs font-bold rounded-md">
+                                    <span x-text="user.name"></span>
+                                    <button type="button" @click.stop="removeUser(user.id)" class="text-primary hover:text-primary/70 focus:outline-none">
+                                        <span class="material-symbols-outlined text-[14px]">close</span>
+                                    </button>
+                                </span>
+                            </template>
+                            <span x-show="selected.length === 0" class="text-slate-400 text-sm py-1 px-2">Chọn người phỏng vấn...</span>
+                            
+                            <!-- Hidden inputs để form HTMX có thể lấy danh sách interviewer_ids -->
+                            <template x-for="id in selected" :key="id">
+                                <input type="hidden" name="interviewer_ids" :value="id">
+                            </template>
+                        </div>
+                        
+                        <!-- Dropdown -->
+                        <div x-show="open" 
+                             x-transition
+                             class="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-xl overflow-hidden"
+                             style="display: none;">
+                            <!-- Search box -->
+                            <div class="p-2 border-b border-slate-100 bg-slate-50">
+                                <div class="relative">
+                                    <span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm">search</span>
+                                    <input x-model="search" type="text" placeholder="Tìm người phỏng vấn..." class="w-full pl-8 pr-3 py-1.5 text-sm rounded border-slate-200 focus:ring-primary focus:border-primary" @keydown.enter.prevent="">
+                                </div>
+                            </div>
+                            
+                            <!-- List -->
+                            <ul class="max-h-48 overflow-y-auto p-1">
+                                <template x-for="user in filteredUsers" :key="user.id">
+                                    <li>
+                                        <label class="flex items-center gap-3 px-3 py-2 hover:bg-slate-50 rounded cursor-pointer transition-colors"
+                                               :class="{ 'bg-primary/5': selected.includes(user.id) }">
+                                            <input type="checkbox" 
+                                                   class="w-4 h-4 text-primary rounded border-slate-300 focus:ring-primary"
+                                                   :value="user.id" 
+                                                   :checked="selected.includes(user.id)" 
+                                                   @change="toggleUser(user.id)">
+                                            <span class="text-sm font-medium" :class="selected.includes(user.id) ? 'text-primary' : 'text-slate-700'" x-text="user.name"></span>
+                                        </label>
+                                    </li>
+                                </template>
+                                <li x-show="filteredUsers.length === 0" class="px-3 py-4 text-center text-sm text-slate-500">
+                                    Không tìm thấy người phỏng vấn nào.
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if interview %}
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-widest mb-2">Trạng thái phỏng vấn</label>
+                    <select name="status" class="w-full px-4 py-2.5 rounded-lg border-slate-200 focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm font-medium">
+                        <option value="scheduled" {% if interview.status == 'scheduled' %}selected{% endif %}>Sắp tới (Đã lên lịch)</option>
+                        <option value="completed" {% if interview.status == 'completed' %}selected{% endif %}>Đã hoàn thành</option>
+                        <option value="cancelled" {% if interview.status == 'cancelled' %}selected{% endif %}>Đã hủy</option>
+                    </select>
+                </div>
+                {% endif %}
+                
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-widest mb-2">Webhook URL <span class="text-slate-400 font-normal italic">(Mặc định n8n)</span></label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+                            <span class="material-symbols-outlined text-sm">link</span>
+                        </span>
+                        <input type="url" name="webhook_url" value="{{ webhook_url }}" class="w-full pl-10 pr-4 py-2.5 rounded-lg border-slate-200 focus:ring-2 focus:ring-primary/20 focus:border-primary text-xs font-mono">
+                    </div>
+                </div>
+            </div>
+            </div>
+            
+            <div class="px-6 py-4 flex items-center justify-end gap-3 border-t border-slate-100 bg-slate-50">
+                <button type="button" onclick="document.getElementById('modal-container').innerHTML=''" class="px-5 py-2.5 rounded-lg border border-slate-200 text-slate-600 font-bold hover:bg-slate-200 transition-colors text-sm bg-white">
+                    Hủy bỏ
+                </button>
+                <button type="submit" class="px-5 py-2.5 rounded-lg bg-primary text-white font-bold hover:shadow-lg hover:shadow-primary/25 transition-all active:scale-95 text-sm flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[18px]">save</span>
+                    Lưu thông tin
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

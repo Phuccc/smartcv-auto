@@ -1,0 +1,50 @@
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm transition-opacity" id="reject-modal-backdrop">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md transform transition-all flex flex-col overflow-hidden" @click.stop="">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50">
+            <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                <span class="material-symbols-outlined text-red-500">cancel</span>
+                Xác nhận từ chối
+            </h3>
+            <button onclick="document.getElementById('modal-container').innerHTML=''" class="text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-lg hover:bg-slate-200">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        
+        <form hx-post="/ui/candidates/{{ candidate_id }}/reject" 
+              hx-on::after-request="if(event.detail.successful) window.location.reload()"
+              class="flex flex-col">
+            <div class="p-6 space-y-5">
+                <div class="bg-red-50 border border-red-100 p-4 rounded-xl">
+                    <p class="text-sm text-red-700 font-medium leading-relaxed">
+                        Bạn có chắc chắn muốn từ chối ứng viên này không? Thao tác này sẽ cập nhật trạng thái ứng viên thành <strong>"Từ chối"</strong>.
+                    </p>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-widest mb-2">Webhook URL Thông báo <span class="text-slate-400 font-normal italic">(n8n)</span></label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+                            <span class="material-symbols-outlined text-sm">link</span>
+                        </span>
+                        <input type="url" name="webhook_url" value="{{ webhook_url }}" required
+                               class="w-full pl-10 pr-4 py-2.5 rounded-lg border-slate-200 focus:ring-2 focus:ring-red-500/20 focus:border-red-500 text-xs font-mono"
+                               placeholder="https://n8n.example.com/...">
+                    </div>
+                    <p class="text-[10px] text-slate-400 mt-1.5 italic">Thông tin ứng viên sẽ được gửi tới webhook này để xử lý gửi email từ chối.</p>
+                </div>
+            </div>
+            
+            <div class="px-6 py-4 flex items-center justify-end gap-3 border-t border-slate-100 bg-slate-50">
+                <button type="button" onclick="document.getElementById('modal-container').innerHTML=''" 
+                        class="px-5 py-2.5 rounded-lg border border-slate-200 text-slate-600 font-bold hover:bg-slate-200 transition-colors text-sm bg-white">
+                    Hủy bỏ
+                </button>
+                <button type="submit" 
+                        class="px-5 py-2.5 rounded-lg bg-red-600 text-white font-bold hover:shadow-lg hover:shadow-red-600/25 transition-all active:scale-95 text-sm flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[18px]">check_circle</span>
+                    Xác nhận từ chối
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

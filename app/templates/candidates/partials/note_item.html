@@ -1,0 +1,33 @@
+<div class="bg-slate-50 p-4 rounded-xl border border-slate-100 group relative" id="note-{{ note.id }}">
+    <div class="flex items-center justify-between mb-2">
+        <div class="flex items-center gap-2">
+            <div class="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center overflow-hidden border border-slate-200">
+                {% if note.author.avatar_url %}
+                    <img src="{{ note.author.avatar_url }}" alt="{{ note.author.full_name }}" class="w-full h-full object-cover">
+                {% else %}
+                    <span class="text-[10px] font-bold text-slate-400">{{ note.author.full_name[:1] | upper }}</span>
+                {% endif %}
+            </div>
+            <span class="text-xs font-bold text-slate-700">{{ note.author.full_name }}</span>
+        </div>
+        <div class="flex items-center gap-2">
+            <span class="text-[10px] font-medium text-slate-400">{{ note.created_at.strftime('%H:%M - %d/%m/%Y') }}</span>
+            <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button hx-get="/ui/candidates/notes/{{ note.id }}/edit" 
+                        hx-target="#note-{{ note.id }}" 
+                        hx-swap="outerHTML"
+                        class="p-1 hover:bg-white rounded text-slate-400 hover:text-primary transition-colors">
+                    <span class="material-symbols-outlined text-[14px]">edit</span>
+                </button>
+                <button hx-post="/ui/candidates/notes/{{ note.id }}/delete"
+                        hx-target="#note-{{ note.id }}"
+                        hx-swap="outerHTML"
+                        hx-confirm="Bạn có chắc chắn muốn xóa ghi chú này?"
+                        class="p-1 hover:bg-white rounded text-slate-400 hover:text-red-500 transition-colors">
+                    <span class="material-symbols-outlined text-[14px]">delete</span>
+                </button>
+            </div>
+        </div>
+    </div>
+    <p class="text-xs text-slate-600 leading-relaxed whitespace-pre-wrap">{{ note.content }}</p>
+</div>

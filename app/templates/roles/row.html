@@ -1,0 +1,47 @@
+<tr class="hover:bg-slate-50/80 transition-colors group" id="role-row-{{ role.name|replace(' ', '_') }}">
+    <td class="text-center px-4 py-4">
+        <span class="text-xs font-bold text-slate-400">
+            {% if loop %}{{ loop.index }}{% else %}{{ loop_index + 1 }}{% endif %}
+        </span>
+    </td>
+    <td class="px-4 py-4">
+        <div class="flex items-center gap-2">
+            <span class="font-bold text-slate-900 text-sm">
+                {{ role.display_name if role.display_name else role.name }}
+            </span>
+            {% if role.is_system %}
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                <span class="material-symbols-outlined text-[10px]">lock</span>Hệ thống
+            </span>
+            {% endif %}
+        </div>
+        <span class="text-xs text-slate-400 mt-0.5 block font-mono">{{ role.name }}</span>
+    </td>
+    <td class="px-4 py-4 text-center">
+        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
+            {{ role.user_count if role.user_count is defined else 0 }} tài khoản
+        </span>
+    </td>
+    <td class="text-right pr-6 py-4">
+        <div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button hx-get="/ui/users/roles/form/{{ role.name }}" hx-target="#modal-container" hx-swap="innerHTML"
+                    class="text-slate-400 hover:text-primary p-2 rounded-lg hover:bg-primary/10 transition-colors"
+                    title="Chỉnh sửa phân quyền">
+                <span class="material-symbols-outlined text-[20px]">security</span>
+            </button>
+            {% if not role.is_system %}
+            <button hx-delete="/ui/users/roles/{{ role.name }}"
+                    hx-confirm="Bạn có chắc chắn muốn xoá vai trò '{{ role.name }}'? Các người dùng có vai trò này sẽ gặp lỗi."
+                    hx-target="closest tr" hx-swap="outerHTML"
+                    class="text-slate-400 hover:text-red-500 p-2 rounded-lg hover:bg-red-50 transition-colors"
+                    title="Xoá vai trò">
+                <span class="material-symbols-outlined text-[20px]">delete</span>
+            </button>
+            {% else %}
+            <span class="p-2 text-slate-200 cursor-not-allowed" title="Không thể xóa vai trò hệ thống">
+                <span class="material-symbols-outlined text-[20px]">lock</span>
+            </span>
+            {% endif %}
+        </div>
+    </td>
+</tr>

@@ -1,0 +1,299 @@
+{
+  "name": "Gửi thư mời nhận việc",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "gui-offer",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -272,
+        -144
+      ],
+      "id": "1adf182c-d088-4bb0-b9a5-a62099b55f60",
+      "name": "Webhook",
+      "webhookId": "c0bd2153-7f12-4692-ba4c-34ba3b6c459d"
+    },
+    {
+      "parameters": {
+        "operation": "copy",
+        "fileId": {
+          "__rl": true,
+          "value": "1umkwQxDXc7OrIFIgGqxpfg99gdvsQQEOKGsSUAHggNY",
+          "mode": "id"
+        },
+        "name": "=Thư mời nhận việc - {{ $json.body.full_name }} - {{ $json.body.job_title }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -80,
+        -144
+      ],
+      "id": "470f8ec4-735d-495e-a10b-96529cb988a8",
+      "name": "Copy file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "KHLTtSwhztbQRuXO",
+          "name": "Google Drive (nguyentrongphuc)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentURL": "={{ $json.id }}",
+        "actionsUi": {
+          "actionFields": [
+            {
+              "action": "replaceAll",
+              "text": "{{ngay_gui}}",
+              "replaceText": "={{ $now.format(\"'ngày' dd 'tháng' MM 'năm' yyyy\")\n }}"
+            },
+            {
+              "action": "replaceAll",
+              "text": "{{ho_ten}}",
+              "replaceText": "={{ $('Webhook').item.json.body.full_name }}"
+            },
+            {
+              "action": "replaceAll",
+              "text": "{{sdt}}",
+              "replaceText": "={{ $('Webhook').item.json.body.phone }}"
+            },
+            {
+              "action": "replaceAll",
+              "text": "{{vi_tri}}",
+              "replaceText": "={{ $('Webhook').item.json.body.job_title }}"
+            },
+            {
+              "action": "replaceAll",
+              "text": "{{dia_chi}}",
+              "replaceText": "={{ $('Webhook').item.json.body.work_location }}"
+            },
+            {
+              "action": "replaceAll",
+              "text": "{{ngay_nhan_viec}}",
+              "replaceText": "={{ $('Webhook').item.json.body.start_date.toDateTime().format(\"'Ngày' dd 'tháng' MM 'năm' yyyy\") }}"
+            },
+            {
+              "action": "replaceAll",
+              "text": "{{thoi_gian_lam_viec}}",
+              "replaceText": "={{ $('Webhook').item.json.body.work_time }}"
+            },
+            {
+              "action": "replaceAll",
+              "text": "{{muc_luong}}",
+              "replaceText": "={{ $('Webhook').item.json.body.salary }}"
+            },
+            {
+              "action": "replaceAll",
+              "text": "{{han_xac_nhan}}",
+              "replaceText": "={{ $now.plus({days: 1}).format(\"'ngày' dd 'tháng' MM 'năm' yyyy\") }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 2,
+      "position": [
+        112,
+        -144
+      ],
+      "id": "b6f830a7-8685-491b-bc4e-7dda15373e34",
+      "name": "Update a document",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "FMkepclhXUNyvyBQ",
+          "name": "Google Docs (nguyentrongphuc18012003)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Webhook').item.json.body.email }}",
+        "subject": "Thư mời nhận việc",
+        "message": "=<!DOCTYPE html>\n<html lang=\"vi\">\n<head>\n    <meta charset=\"UTF-8\">\n    <style>\n        body {\n            font-family: \"Segoe UI\", Tahoma, Geneva, Verdana, sans-serif;\n            line-height: 1.6;\n            color: #333;\n            max-width: 600px;\n            margin: 20px auto;\n        }\n        .highlight-gold {\n            color: #b8860b; /* Màu vàng đồng sang trọng, biểu trưng cho sự thành công */\n            font-weight: bold;\n        }\n        .offer-details {\n            background-color: #fffdf5;\n            border: 1px dashed #b8860b;\n            padding: 15px;\n            margin: 20px 0;\n        }\n        .action-call {\n            color: #d9534f; /* Màu đỏ nhẹ để nhấn mạnh hành động cần làm */\n            font-weight: bold;\n        }\n        .footer {\n            margin-top: 30px;\n            padding-top: 10px;\n            border-top: 1px solid #eee;\n            font-size: 0.9em;\n            color: #666;\n        }\n    </style>\n</head>\n<body>\n\n    <p>Chào <strong>{{ $('Webhook').item.json.body.full_name }}</strong>,</p>\n\n    <p>Chúc mừng bạn! Sau quá trình tuyển dụng, <strong>SmartCV</strong> rất ấn tượng với năng lực của bạn và trân trọng mời bạn gia nhập đội ngũ của chúng tôi tại vị trí <span class=\"highlight-gold\">{{ $('Webhook').item.json.body.job_title }}</span>.</p>\n    \n    <div class=\"offer-details\">\n        <p><strong>Thông tin cơ bản:</strong></p>\n        <ul>\n            <li>Ngày bắt đầu làm việc: <span class=\"highlight-gold\">{{ $('Webhook').item.json.body.start_date.toDateTime().format('dd/MM/yyyy') }}</span></li>\n            <li>Địa điểm làm việc: {{ $('Webhook').item.json.body.work_location }}</li>\n            <li>Thời gian làm việc: {{ $('Webhook').item.json.body.work_time }}</li>\n        </ul>\n    </div>\n\n    <p>Để hoàn tất thủ tục tiếp nhận, bạn vui lòng <span class=\"action-call\">xác nhận việc đồng ý nhận việc</span> bằng cách:</p>\n    \n\n    <p>Liên hệ với bộ phận Nhân sự qua số điện thoại: <span class=\"highlight-gold\">0335270880</span> (Gặp [Tên HR]).</p>\n\n    <p>Hạn chót để xác nhận là trước <span class=\"action-call\">17h00, {{$now.plus(1,'days').format('dd/MM/yyyy')}}</span>.</p>\n\n    <p>Chúng tôi rất mong chờ sự góp mặt của bạn để cùng nhau tạo nên những thành công mới tại SmartCV!</p>\n\n    <div class=\"footer\">\n        Trân trọng,<br>\n        <strong>SmartCV - Nơi hội tụ các nhân tài</strong>\n    </div>\n\n</body>\n</html>",
+        "options": {
+          "appendAttribution": false,
+          "attachmentsUi": {
+            "attachmentsBinary": [
+              {}
+            ]
+          },
+          "senderName": "HR SmartCV"
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        464,
+        16
+      ],
+      "id": "82e6f265-2db3-43bc-9779-b23e7b58d2f8",
+      "name": "Send a message",
+      "webhookId": "b272a9b9-7388-4719-bfed-b96e8fecac23",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "YBpWUx8xglTLXWuA",
+          "name": "Gmail (nguyentrongphuc)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "deleteFile",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.documentId }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        112,
+        16
+      ],
+      "id": "44bdfbf6-4b7b-4341-9242-3ebb19e8f068",
+      "name": "Delete a file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "KHLTtSwhztbQRuXO",
+          "name": "Google Drive (nguyentrongphuc)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Gửi thư mời nhận việc",
+        "height": 416,
+        "width": 1008,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -336,
+        -240
+      ],
+      "typeVersion": 1,
+      "id": "79576838-ee5a-4009-8cd1-7aac350923cf",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "url": "=https://www.googleapis.com/drive/v3/files/{{ $json.documentId }}/export?mimeType=application/pdf",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        288,
+        -144
+      ],
+      "id": "34c43fda-474e-4155-a61a-5d206eada34d",
+      "name": "Chuyển sang PDF",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "KHLTtSwhztbQRuXO",
+          "name": "Google Drive (nguyentrongphuc)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. Lấy tên từ node 'Copy file'\nconst tenMoi = $('Copy file').first().json.name;\n\n// 2. Lấy danh sách các item đi vào node này\nconst items = $input.all();\n\n// 3. Chạy vòng lặp để đổi tên cho từng file\nfor (let item of items) {\n  if (item.binary && item.binary.data) {\n    item.binary.data.fileName = `${tenMoi}.pdf`;\n  }\n}\n\nreturn items;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        464,
+        -144
+      ],
+      "id": "5cedcc71-8085-441a-9ab9-40d943bd5765",
+      "name": "Đổi tên PDF"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Copy file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Copy file": {
+      "main": [
+        [
+          {
+            "node": "Update a document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update a document": {
+      "main": [
+        [
+          {
+            "node": "Chuyển sang PDF",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Delete a file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chuyển sang PDF": {
+      "main": [
+        [
+          {
+            "node": "Đổi tên PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Đổi tên PDF": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "37261ddd-e669-4c39-831e-d35a1bd00b3a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5a38ffae1cf93921ba3f4162819422b4c69848b6011f05f73be2f0f57ce28553"
+  },
+  "id": "IoYrBrrVO6EWViIc",
+  "tags": []
+}

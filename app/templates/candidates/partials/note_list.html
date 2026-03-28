@@ -1,0 +1,12 @@
+<div class="space-y-4" id="notes-list">
+    {% for note in notes %}
+        {% include "candidates/partials/note_item.html" with context %}
+    {% else %}
+    <div class="py-12 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+        <div class="w-12 h-12 rounded-full bg-white flex items-center justify-center text-slate-300 mx-auto mb-3 shadow-sm">
+            <span class="material-symbols-outlined text-2xl">description</span>
+        </div>
+        <p class="text-sm font-medium text-slate-400">Chưa có ghi chú nào cho ứng viên này.</p>
+    </div>
+    {% endfor %}
+</div>

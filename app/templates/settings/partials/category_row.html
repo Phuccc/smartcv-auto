@@ -1,0 +1,43 @@
+<div id="row-{{ category_type }}-{{ item.id }}" class="group relative bg-white border border-slate-100 rounded-xl p-3 hover:shadow-md hover:border-primary/20 transition-all flex items-center justify-between gap-2 overflow-hidden">
+    {% if editing %}
+        <form hx-post="/ui/categories/{{ category_type }}/{{ item.id }}/update" 
+              hx-target="#row-{{ category_type }}-{{ item.id }}" 
+              hx-swap="outerHTML"
+              class="flex-1 flex items-center gap-1.5 w-full">
+            <input type="text" name="name" value="{{ item.name }}" required autofocus
+                   class="flex-1 px-2 py-1 rounded-lg border-primary ring-2 ring-primary/10 text-xs font-bold bg-white w-full">
+            <div class="flex gap-0.5">
+                <button type="submit" class="w-7 h-7 flex items-center justify-center text-green-600 hover:bg-green-50 rounded-lg transition-colors" title="Lưu">
+                    <span class="material-symbols-outlined text-[18px]">check</span>
+                </button>
+                <button type="button" 
+                        hx-get="/ui/categories/{{ category_type }}/{{ item.id }}/cancel"
+                        hx-target="#row-{{ category_type }}-{{ item.id }}"
+                        hx-swap="outerHTML"
+                        class="w-7 h-7 flex items-center justify-center text-slate-400 hover:bg-slate-100 rounded-lg transition-colors" title="Hủy">
+                    <span class="material-symbols-outlined text-[18px]">close</span>
+                </button>
+            </div>
+        </form>
+    {% else %}
+        <div class="flex-1 min-w-0 pr-6">
+            <span class="text-xs font-bold text-slate-700 truncate block">{{ item.name }}</span>
+        </div>
+        
+        <div class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 pl-2">
+            <button hx-get="/ui/categories/{{ category_type }}/{{ item.id }}/edit"
+                    hx-target="#row-{{ category_type }}-{{ item.id }}"
+                    hx-swap="outerHTML"
+                    class="w-7 h-7 flex items-center justify-center text-blue-500 hover:bg-blue-50 rounded-lg transition-colors" title="Sửa">
+                <span class="material-symbols-outlined text-[16px]">edit</span>
+            </button>
+            <button hx-delete="/ui/categories/{{ category_type }}/{{ item.id }}"
+                    hx-confirm="Xóa '{{ item.name }}'?"
+                    hx-target="#row-{{ category_type }}-{{ item.id }}"
+                    hx-swap="outerHTML"
+                    class="w-7 h-7 flex items-center justify-center text-red-400 hover:bg-red-50 rounded-lg transition-colors" title="Xóa">
+                <span class="material-symbols-outlined text-[16px]">delete</span>
+            </button>
+        </div>
+    {% endif %}
+</div>

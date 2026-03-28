@@ -1,0 +1,1716 @@
+{
+  "name": "Đánh giá ứng viên",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {
+          "labelIds": [
+            "INBOX"
+          ],
+          "q": "subject:\"ứng tuyển\" has:attachment",
+          "readStatus": "unread"
+        },
+        "options": {
+          "downloadAttachments": true
+        }
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -1104,
+        -464
+      ],
+      "id": "aa9aae7a-ee4d-4d3b-815a-49d30938de70",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "YBpWUx8xglTLXWuA",
+          "name": "Gmail (nguyentrongphuc)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "danh-gia-ung-vien",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -976,
+        -1184
+      ],
+      "id": "bb948687-cc93-4e41-bb11-c535941e36d8",
+      "name": "Webhook",
+      "webhookId": "340907d4-d959-4fe9-ba75-65d18b09df85"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "84f2404c-6537-416f-83f3-8898f85e704f",
+              "name": "Vị trí ứng tuyển",
+              "value": "={{ $('Gmail Trigger').item.json.subject.match(/\\[(.*?) -/)[1] }}",
+              "type": "string"
+            },
+            {
+              "id": "0cdbdc2f-21df-4550-a8e9-88e7c620bdd4",
+              "name": "Họ và tên",
+              "value": "={{ $('Gmail Trigger').item.json.subject.match(/- ([^/-]*)]/)[1].trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "0d894a4b-86e9-4318-a4d5-5dd858a19ce8",
+              "name": "Chi nhánh",
+              "value": "={{ $('Gmail Trigger').item.json.subject.match(/- (.*) -/)[1] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -912,
+        -368
+      ],
+      "id": "0b752d55-c8be-4abc-8a16-6b9779ce71fa",
+      "name": "Tách lấy họ tên và vị trí ứng tuyển"
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "binaryPropertyName": "attachment_0",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        -720,
+        -464
+      ],
+      "id": "af20e91a-21f3-4ec5-a711-4a5e56fb501d",
+      "name": "Trích xuất text từ PDF"
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "binaryPropertyName": "file",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        -672,
+        -1184
+      ],
+      "id": "5f46d3ff-32fd-4ac4-9c2e-de6fc356dbc9",
+      "name": "Trích xuất text từ PDF 02"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.1-flash-lite-preview",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -224,
+        -1072
+      ],
+      "id": "b002a8ea-2fe0-444b-9d3c-b22eeed84a30",
+      "name": "Gemini1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "2IGNn523baNlkpOY",
+          "name": "Google Gemini(boyjoon2003)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "inputDataFieldName": "file",
+        "name": "={{ $json.body.job_title }} - {{ $json.body.full_name }}",
+        "driveId": {
+          "__rl": true,
+          "value": "My Drive",
+          "mode": "list",
+          "cachedResultName": "My Drive",
+          "cachedResultUrl": "https://drive.google.com/drive/my-drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1L46NnMG0LxxF3gDangjPpLVeMoloixLy",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -672,
+        -1344
+      ],
+      "id": "3db85022-2fd6-41b8-8041-0a6c8fab7d16",
+      "name": "Upload file1",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "KHLTtSwhztbQRuXO",
+          "name": "Google Drive (nguyentrongphuc)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Gọi công cụ này để tra cứu danh sách các vị trí tuyển dụng đang mở phù hợp hoặc có tính chất tương tự với hồ sơ của ứng viên. Hãy sử dụng nó khi bạn đã nắm được thông tin năng lực của ứng viên và cần tìm kiếm cơ hội việc làm tương ứng.",
+        "url": "https://smartcv.phucmeo.id.vn/api/v1/jobs",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "status",
+              "value": "open"
+            },
+            {
+              "name": "branch_name",
+              "value": "={{ $json.branch_name }}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        -16,
+        -992
+      ],
+      "id": "1e0d531f-4656-465f-a56f-421e7ad3b7aa",
+      "name": "Kiểm tra các vị trí tuyển dụng",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "XcCAyjRQtcLhjVWG",
+          "name": "SmartCV-Auto"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://smartcv.phucmeo.id.vn/api/v1/jobs",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "={{ $json.body.job_title }}"
+            },
+            {
+              "name": "branch_name",
+              "value": "={{ $json.body.branch_name }}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -768,
+        -1024
+      ],
+      "id": "8f591403-ab83-491e-a168-c996526b837a",
+      "name": "GET ID vị trí ứng tuyển",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "XcCAyjRQtcLhjVWG",
+          "name": "SmartCV-Auto"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://smartcv.phucmeo.id.vn/api/v1/jobs/{{ $json.items[0].id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -576,
+        -1024
+      ],
+      "id": "5da56f2b-5f75-46fb-b350-560b7404c59b",
+      "name": "GET thông tin vị trí ứng tuyển",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "XcCAyjRQtcLhjVWG",
+          "name": "SmartCV-Auto"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"full_name\": { \"type\": \"string\", \"description\": \"Họ và tên ứng viên\" },\n    \"date_of_birth\": { \"type\": \"string\", \"format\": \"date\" },\n    \"gender\": { \"type\": \"string\", \"enum\": [\"male\", \"female\", \"other\"] },\n    \"phone\": { \"type\": \"string\" },\n    \"email\": { \"type\": \"string\", \"format\": \"email\" },\n    \"specific_address\": { \"type\": \"string\" },\n    \"job_id\": { \"type\": \"integer\" },\n    \"status\": { \n      \"type\": \"string\", \n      \"enum\": [\"mới\", \"duyệt\", \"từ chối\"],\n      \"default\": \"mới\"\n    },\n    \"applied_date\": { \"type\": \"string\", \"format\": \"date\" },\n    \"score\": { \"type\": \"number\" },\n    \"ai_summary\": { \"type\": \"string\" },\n    \"education\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"degree\": { \"type\": \"string\" },\n          \"institution\": { \"type\": \"string\" },\n          \"major\": { \"type\": \"string\" },\n          \"start_year\": { \"type\": \"integer\" },\n          \"end_year\": { \"type\": \"integer\" }\n        }\n      }\n    },\n    \"experience\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"company_name\": { \"type\": \"string\" },\n          \"position\": { \"type\": \"string\" },\n          \"start_date\": { \"type\": \"string\", \"format\": \"date\" },\n          \"end_date\": { \"type\": \"string\", \"format\": \"date\" },\n          \"description\": { \"type\": \"string\" }\n        },\n        \"required\": [\"company_name\"]\n      }\n    },\n    \"skill_ids\": { \"type\": \"array\", \"items\": { \"type\": \"integer\" } },\n    \"facebook\": { \"type\": \"string\" },\n    \"cv_link\": { \"type\": \"string\" },\n    \"portfolio_link\": { \"type\": \"string\" },\n    \"links\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"label\": { \"type\": \"string\" },\n          \"url\": { \"type\": \"string\" }\n        },\n        \"required\": [\"label\", \"url\"]\n      }\n    }\n  },\n  \"required\": [\"full_name\"]\n}\n",
+        "autoFix": true
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        320,
+        -1040
+      ],
+      "id": "4de9edd2-cb4e-42f7-83d5-3c3956f42a4d",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://smartcv.phucmeo.id.vn/api/v1/candidates",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.output.toJsonString() }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        320,
+        -1248
+      ],
+      "id": "9af2b3a2-f058-4fe2-a2ff-fdbfa31820ee",
+      "name": "HTTP Request",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "XcCAyjRQtcLhjVWG",
+          "name": "SmartCV-Auto"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.1-flash-lite-preview",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        432,
+        -896
+      ],
+      "id": "c2d1baae-b520-4ba2-8bff-bb2e3b4fdedf",
+      "name": "Google Gemini Chat Model2",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "y8ZlOhtV5wnDheiF",
+          "name": "Google Gemini(boyjoon181)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "numberInputs": 3,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -400,
+        -1200
+      ],
+      "id": "afc92c59-7bbc-4826-9f43-81b37c907e91",
+      "name": "Merge1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=- Đây là thông tin của ứng viên {{ $('Webhook').item.json.body.full_name }} :\"{{ $json.text.replace(/\\u0000/g, '').replace(/[^\\x00-\\x7FàáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệđìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵÀÁẢÃẠĂẰẮẲẴẶÂẦẤẨẪẬÈÉẺẼẸÊỀẾỂỄỆĐÌÍỈĨỊÒÓỎÕỌÔỒỐỔỐỘƠỜỚỞỠỢÙÚỦŨỤƯỪỨỬỮỰỲÝỶỸỴ\\s.,;:\\-()!?\"']/g, '') }}\"\n- Ứng tuyển tại vị trí {{ $('Webhook').item.json.body.job_title }} - {{ $('Webhook').item.json.body.branch_name }} (job_id = {{ $json.id }}) với thông tin yêu cầu của vị trí ứng tuyển là : {{ $json.description }}\n{{ $json.requirements }}\nCần học vấn {{ $json.education_level }}, kinh nghiệm {{ $json.experience_level }} và skill {{ $json.skill_ids }}\n- Đây là link CV của ứng viên : \"{{ $('Upload file1').item.json.webViewLink }}\"",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "Bạn là một Chuyên gia Tuyển dụng AI (AI HR Specialist) cực kỳ thông minh. \nNhiệm vụ của bạn là đọc thông tin từ Hồ sơ ứng viên (CV/Resume), Yêu cầu công việc (Job Description - JD), và đối chiếu với hệ thống dữ liệu để đánh giá ứng viên một cách chính xác, khách quan và có khả năng đề xuất vị trí phù hợp hơn.\n\nBạn có quyền sử dụng các công cụ sau:\n\n1. Kiểm tra danh sách kỹ năng\n→ Trả về danh sách toàn bộ kỹ năng trong hệ thống:\n[{ skill_id, skill_name }]\n\n2. Kiểm tra các vị trí tuyển dụng\n→ Trả về danh sách tất cả job:\n[{ job_id, job_name, department }]\n\n3. Kiểm tra mô tả vị trí tuyển dụng\n→ Input: job_id  \n→ Output: thông tin chi tiết JD:\n{\n  job_id,\n  job_name,\n  required_skills,\n  description,\n  experience_required,\n  education_required\n}\n\n========================\nQUY TRÌNH THỰC HIỆN BẮT BUỘC\n========================\n\n1. GỌI CÔNG CỤ (TOOL CALLING):\n- Bắt buộc phải sử dụng công cụ được cung cấp (Kiểm tra danh sách kỹ năng) để truy xuất toàn bộ danh sách kỹ năng và \"skill_id\" tương ứng hiện có trong hệ thống hay truy xuất danh sách jobs hoặc thông tin chi tiết của 1 jobs khi mà cần kiểm tra độ phù hợp với jobs khác.\n- Không được tự tạo kỹ năng hoặc ID.\n\n2. TRÍCH XUẤT THÔNG TIN:\n- Lấy đầy đủ thông tin từ CV:\n  + Thông tin cá nhân\n  + Học vấn\n  + Kinh nghiệm làm việc\n  + Kỹ năng\n  + Dự án (nếu có)\n\n3. ĐỐI CHIẾU KỸ NĂNG:\n- So sánh kỹ năng trong CV với danh sách kỹ năng hệ thống.\n- Chỉ giữ lại các kỹ năng TRÙNG KHỚP.\n- Lưu lại \"skill_id\" tương ứng.\n- Không được suy đoán hoặc thêm kỹ năng không có trong CV.\n\n4. ĐÁNH GIÁ VÀ CHẤM ĐIỂM:\nThực hiện chấm điểm theo thang 1–10 (có thể dùng số thập phân), dựa trên các tiêu chí có trọng số sau:\n\na. Mức độ phù hợp kỹ năng (Skill Matching) – 40%\n- Tỷ lệ kỹ năng khớp giữa CV và JD\n- Kỹ năng cốt lõi quan trọng được ưu tiên\n\nb. Kinh nghiệm làm việc (Experience) – 30%\n- Số năm kinh nghiệm\n- Domain có phù hợp không\n- Có kinh nghiệm tương tự JD hay không\n\nc. Trình độ học vấn (Education) – 15%\n- Chuyên ngành có liên quan\n- Trường đào tạo (nếu nổi bật)\n- Bằng cấp\n\nd. Mức độ phù hợp tổng thể (Overall Fit) – 15%\n- Sự nhất quán giữa kỹ năng + kinh nghiệm\n- Khả năng đáp ứng công việc ngay\n\n=> Công thức định hướng:\nscore = (skill*0.4 + exp*0.3 + edu*0.15 + fit*0.15)\n\n5. TÓM TẮT (AI SUMMARY):\n- Viết 2–3 câu:\n  + Lý do đạt mức điểm\n  + Điểm mạnh\n  + Điểm yếu\n\n========================\nQUY TẮC CHẤM ĐIỂM (CHI TIẾT)\n========================\n\n- 9.0 – 10:\n  + Gần như hoàn hảo (>95% JD)\n  + Có thể onboard ngay không cần đào tạo\n\n- 8.0 – 8.9:\n  + Phù hợp tốt (~80–90%)\n  + Thiếu rất ít kỹ năng\n\n- 7.0 – 7.9:\n  + Đáp ứng cơ bản (~70%)\n  + Cần đào tạo thêm\n\n- 5.0 – 6.9:\n  + Không phù hợp vị trí hiện tại\n  + Có thể phù hợp vị trí khác\n\n- < 5.0:\n  + Không phù hợp hoàn toàn\n\n========================\nLOGIC CHUYỂN VỊ TRÍ (RE-MATCHING)\n========================\n\nKhi:\nscore < 7.0\n\nBẮT BUỘC thực hiện:\n\n1. Tìm vị trí khác trong cùng phòng ban từ hệ thống bằng tool \"Kiểm tra các vị trí tuyển dụng\" để có danh sách job_id phù hợp với ứng viên, rồi sẽ gọi lần lượt job_id để xem chi tiết mô tả vị trí ở tool \"Kiểm tra mô tả vị trí tuyển dụng\"\n\n2. Đánh giá lại ứng viên (re-score) với vị trí mới dựa trên:\n- Skill_ids\n- Kinh nghiệm\n- Học vấn\n\n3. Nếu tồn tại vị trí thỏa:\nre_score ≥ 8.0\n\n=> THÌ:\n- Cập nhật:\n  + \"job_id\" = vị trí mới\n  + \"score\" = re_score\n  + \"status\" = \"đã duyệt\"\n\n- AI Summary phải ghi rõ:\n  + Không phù hợp vị trí ban đầu\n  + Phù hợp vị trí mới\n  + Lý do chuyển\n\n4. Nếu không có vị trí phù hợp:\n- Giữ:\n  + \"status\" = \"từ chối\"\n\n========================\nQUY TẮC TRẠNG THÁI\n========================\n\n- score ≥ 7 → \"mới\"\n- re-matching thành công → \"đã duyệt\"\n- score < 7 và không match → \"từ chối\"\n\n========================\nQUY TẮC ĐỊNH DẠNG OUTPUT (BẮT BUỘC)\n========================\n\n- CHỈ trả về duy nhất 1 JSON hợp lệ\n- Không thêm text ngoài JSON\n\nSchema:\n\n{\n  \"full_name\": \"string\",\n  \"date_of_birth\": \"YYYY-MM-DD\",\n  \"gender\": \"male | female | other\",\n  \"phone\": \"string\",\n  \"email\": \"string\",\n  \"specific_address\": \"string\",\n  \"job_id\": number,\n  \"score\": number,\n  \"status\": \"mới | từ chối | đã duyệt\",\n  \"applied_date\": \"YYYY-MM-DD\",\n  \"ai_summary\": \"string\",\n  \"education\": [\n    {\n      \"degree\": \"string\",\n      \"institution\": \"string\",\n      \"major\": \"string\",\n      \"start_year\": \"number\",\n      \"end_year\": \"number\"\n    }\n  ],\n  \"experience\": [\n    {\n      \"company_name\": \"string\",\n      \"position\": \"string\",\n      \"start_date\": \"YYYY-MM-DD\",\n      \"end_date\": \"YYYY-MM-DD\",\n      \"description\": \"string\"\n    }\n  ],\n  \"skill_ids\": [number],\n  \"facebook\": \"string\",\n  \"cv_link\": \"string\",\n  \"portfolio_link\": \"string\",\n  \"links\": [\n    {\n      \"label\": \"string\",\n      \"url\": \"string\"\n    }\n  ]\n}\n\n========================\nRÀNG BUỘC QUAN TRỌNG\n========================\n\n- Không được tự tạo skill_id\n- Không được suy đoán thông tin không có trong CV\n- Không được trả về text ngoài JSON\n- Luôn ưu tiên tính chính xác hơn suy diễn\n- Phải thực hiện re-matching khi score < 7"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -48,
+        -1248
+      ],
+      "id": "4b2492bb-6f9b-4b65-918b-024b2b8566b0",
+      "name": "AI Agent1"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Gọi công cụ này để lấy danh sách toàn bộ các kỹ năng (skills) hợp lệ từ hệ thống. Hãy sử dụng nó khi bạn cần xác thực danh sách kỹ năng đầu vào. Nhiệm vụ của bạn: Sau khi có danh sách từ công cụ này, hãy đối chiếu với dữ liệu đầu vào, chỉ giữ lại những kỹ năng có tồn tại trong danh sách trả về và loại bỏ các kỹ năng không hợp lệ.",
+        "url": "https://smartcv.phucmeo.id.vn/api/v1/skills",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        112,
+        -864
+      ],
+      "id": "d8a8ff2f-0c7f-45ca-aefe-39875c2e9400",
+      "name": "Kiểm tra các kỹ năng",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "XcCAyjRQtcLhjVWG",
+          "name": "SmartCV-Auto"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Upload file1').item.json.id }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        -176,
+        -896
+      ],
+      "id": "5c5da5ec-0f11-4201-9aa5-de879ba4204c",
+      "name": "Postgres Chat Memory",
+      "credentials": {
+        "postgres": {
+          "id": "ZVdExmKdcVm1mtDt",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Nhận CV từ webhook",
+        "height": 688,
+        "width": 2048,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1072,
+        -1392
+      ],
+      "typeVersion": 1,
+      "id": "50803604-7097-4605-9402-ae9ba1f80f9c",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "url": "https://smartcv.phucmeo.id.vn/api/v1/jobs",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "={{ $json['Vị trí ứng tuyển'] }}"
+            },
+            {
+              "name": "branch_name",
+              "value": "={{ $json['Chi nhánh'] }}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -912,
+        -208
+      ],
+      "id": "f34c8828-69d4-4873-8330-2d78a93fc51c",
+      "name": "GET ID vị trí ứng tuyển1",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "XcCAyjRQtcLhjVWG",
+          "name": "SmartCV-Auto"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://smartcv.phucmeo.id.vn/api/v1/jobs/{{ $json.items[0].id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -544,
+        -368
+      ],
+      "id": "32a992e5-42ab-4d1c-8101-24c5b41fc11f",
+      "name": "GET thông tin vị trí ứng tuyển1",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "XcCAyjRQtcLhjVWG",
+          "name": "SmartCV-Auto"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "inputDataFieldName": "attachment_0",
+        "name": "={{ $json.subject.match(/\\[(.*?)\\]/)[1] }}",
+        "driveId": {
+          "__rl": true,
+          "value": "My Drive",
+          "mode": "list",
+          "cachedResultName": "My Drive",
+          "cachedResultUrl": "https://drive.google.com/drive/my-drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1L46NnMG0LxxF3gDangjPpLVeMoloixLy",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -720,
+        -624
+      ],
+      "id": "8b358df9-dc98-4958-b4bc-9d286987b9df",
+      "name": "Upload file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "KHLTtSwhztbQRuXO",
+          "name": "Google Drive (nguyentrongphuc)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "numberInputs": 3,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -368,
+        -480
+      ],
+      "id": "d4f14644-0c21-4552-8841-e4c59e139288",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "abf028d8-77d9-4000-b923-689d2e4fcd73",
+              "leftValue": "={{ $json.items }}",
+              "rightValue": "",
+              "operator": {
+                "type": "array",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -720,
+        -256
+      ],
+      "id": "c7069116-54a1-4f96-b028-c2f440047c86",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "content": "## Nhận CV từ Gmail",
+        "height": 768,
+        "width": 2292,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1184,
+        -672
+      ],
+      "typeVersion": 1,
+      "id": "7309dc7a-c5d7-4c09-bb90-c5875a8c9024",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Gọi công cụ này để tra cứu thông tin mô tả chi tiết (JD) dựa trên danh sách các job_id. Hãy sử dụng nó ngay sau khi bạn đã lấy được danh sách job_id từ công cụ 'Kiểm tra các vị trí tuyển dụng'. Nhiệm vụ của bạn: Sau khi nhận được thông tin chi tiết của từng vị trí, hãy thực hiện đánh giá chuyên sâu bằng cách so khớp (match) các yêu cầu về kỹ năng, kinh nghiệm và trình độ với hồ sơ của ứng viên hiện tại. Lọc và chỉ trả về thông tin của công việc có độ phù hợp cao nhất. Nếu qua quá trình đánh giá không có bất kỳ vị trí nào đáp ứng đủ tiêu chí, bắt buộc trả về kết quả: 'Không có vị trí phù hợp'. Có thể gọi nhiều lần tool này để lấy đủ hết từng id trong danh sách jods_id.",
+        "url": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('URL', `URL là \"https://smartcv.phucmeo.id.vn/api/v1/jobs/{job_id}\"\nThay thế {job_id} bằng id phù hợp cần xem chi tiết mô tả vị trí công việc`, 'string') }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        208,
+        -1024
+      ],
+      "id": "d54670fe-951e-47da-84bc-a1cc022bb38e",
+      "name": "Kiểm tra mô tả vị trí tuyển dụng",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "XcCAyjRQtcLhjVWG",
+          "name": "SmartCV-Auto"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('AI Agent1').item.json.output.status }}",
+                    "rightValue": "duyệt",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "75503a46-8d71-4345-ae94-258d70de1975"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Vị trí mới"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "dc5eeecc-a179-473b-8044-423ced00bfaf",
+                    "leftValue": "={{ $('AI Agent1').item.json.output.status }}",
+                    "rightValue": "từ chối",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Ko phù hợp"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        528,
+        -1248
+      ],
+      "id": "484e91d1-2a03-4bec-8ce9-bd2c5e743758",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.1-flash-lite-preview",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -288,
+        -256
+      ],
+      "id": "f2128deb-455c-4901-9d44-402706a21397",
+      "name": "Gemini2",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "2IGNn523baNlkpOY",
+          "name": "Google Gemini(boyjoon2003)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Gọi công cụ này để tra cứu danh sách các vị trí tuyển dụng đang mở phù hợp hoặc có tính chất tương tự với hồ sơ của ứng viên. Hãy sử dụng nó khi bạn đã nắm được thông tin năng lực của ứng viên và cần tìm kiếm cơ hội việc làm tương ứng.",
+        "url": "https://smartcv.phucmeo.id.vn/api/v1/jobs",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "status",
+              "value": "open"
+            },
+            {
+              "name": "branch_name",
+              "value": "={{ $json.branch_name }}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        -96,
+        -208
+      ],
+      "id": "6f2ef512-6f8b-436a-a6ff-90586f0df3f4",
+      "name": "Kiểm tra các vị trí tuyển dụng1",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "XcCAyjRQtcLhjVWG",
+          "name": "SmartCV-Auto"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"full_name\": { \"type\": \"string\", \"description\": \"Họ và tên ứng viên\" },\n    \"date_of_birth\": { \"type\": \"string\", \"format\": \"date\" },\n    \"gender\": { \"type\": \"string\", \"enum\": [\"male\", \"female\", \"other\"] },\n    \"phone\": { \"type\": \"string\" },\n    \"email\": { \"type\": \"string\", \"format\": \"email\" },\n    \"specific_address\": { \"type\": \"string\" },\n    \"job_id\": { \"type\": \"integer\" },\n    \"status\": { \n      \"type\": \"string\", \n      \"enum\": [\"mới\", \"duyệt\", \"từ chối\"],\n      \"default\": \"mới\"\n    },\n    \"applied_date\": { \"type\": \"string\", \"format\": \"date\" },\n    \"score\": { \"type\": \"number\" },\n    \"ai_summary\": { \"type\": \"string\" },\n    \"education\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"degree\": { \"type\": \"string\" },\n          \"institution\": { \"type\": \"string\" },\n          \"major\": { \"type\": \"string\" },\n          \"start_year\": { \"type\": \"integer\" },\n          \"end_year\": { \"type\": \"integer\" }\n        }\n      }\n    },\n    \"experience\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"company_name\": { \"type\": \"string\" },\n          \"position\": { \"type\": \"string\" },\n          \"start_date\": { \"type\": \"string\", \"format\": \"date\" },\n          \"end_date\": { \"type\": \"string\", \"format\": \"date\" },\n          \"description\": { \"type\": \"string\" }\n        },\n        \"required\": [\"company_name\"]\n      }\n    },\n    \"skill_ids\": { \"type\": \"array\", \"items\": { \"type\": \"integer\" } },\n    \"facebook\": { \"type\": \"string\" },\n    \"cv_link\": { \"type\": \"string\" },\n    \"portfolio_link\": { \"type\": \"string\" },\n    \"links\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"label\": { \"type\": \"string\" },\n          \"url\": { \"type\": \"string\" }\n        },\n        \"required\": [\"label\", \"url\"]\n      }\n    }\n  },\n  \"required\": [\"full_name\"]\n}\n",
+        "autoFix": true
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        240,
+        -256
+      ],
+      "id": "37e0c47c-4d85-45d1-aa14-eff1311d41ad",
+      "name": "Structured Output Parser2"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://smartcv.phucmeo.id.vn/api/v1/candidates",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.output.toJsonString() }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        240,
+        -464
+      ],
+      "id": "ba27b1cf-aca1-4fdf-8f34-ab46ee1516e5",
+      "name": "HTTP Request2",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "XcCAyjRQtcLhjVWG",
+          "name": "SmartCV-Auto"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.1-flash-lite-preview",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        352,
+        -112
+      ],
+      "id": "0aa3d883-26cd-4ac0-815b-652ae5495d6b",
+      "name": "Google Gemini Chat Model5",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "y8ZlOhtV5wnDheiF",
+          "name": "Google Gemini(boyjoon181)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=- Đây là thông tin của ứng viên {{ $('Tách lấy họ tên và vị trí ứng tuyển').item.json['Họ và tên'] }} :\"{{ $json.text.replace(/\\u0000/g, '').replace(/[^\\x00-\\x7FàáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệđìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵÀÁẢÃẠĂẰẮẲẴẶÂẦẤẨẪẬÈÉẺẼẸÊỀẾỂỄỆĐÌÍỈĨỊÒÓỎÕỌÔỒỐỔỐỘƠỜỚỞỠỢÙÚỦŨỤƯỪỨỬỮỰỲÝỶỸỴ\\s.,;:\\-()!?\"']/g, '') }}\"\n- Ứng tuyển tại vị trí {{ $('Tách lấy họ tên và vị trí ứng tuyển').item.json['Vị trí ứng tuyển'] }} - {{ $('Tách lấy họ tên và vị trí ứng tuyển').item.json['Chi nhánh'] }} (job_id = {{ $json.id }}) với thông tin yêu cầu của vị trí ứng tuyển là : {{ $json.description }}\n{{ $json.requirements }}\nCần học vấn {{ $json.education_level }}, kinh nghiệm {{ $json.experience_level }} và skill {{ $json.skill_ids }}\n- Đây là link CV của ứng viên : \"{{ $('Upload file').item.json.webViewLink }}\"",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "Bạn là một Chuyên gia Tuyển dụng AI (AI HR Specialist) cực kỳ thông minh. \nNhiệm vụ của bạn là đọc thông tin từ Hồ sơ ứng viên (CV/Resume), Yêu cầu công việc (Job Description - JD), và đối chiếu với hệ thống dữ liệu để đánh giá ứng viên một cách chính xác, khách quan và có khả năng đề xuất vị trí phù hợp hơn.\n\nBạn có quyền sử dụng các công cụ sau:\n\n1. Kiểm tra danh sách kỹ năng\n→ Trả về danh sách toàn bộ kỹ năng trong hệ thống:\n[{ skill_id, skill_name }]\n\n2. Kiểm tra các vị trí tuyển dụng\n→ Trả về danh sách tất cả job:\n[{ job_id, job_name, department }]\n\n3. Kiểm tra mô tả vị trí tuyển dụng\n→ Input: job_id  \n→ Output: thông tin chi tiết JD:\n{\n  job_id,\n  job_name,\n  required_skills,\n  description,\n  experience_required,\n  education_required\n}\n\n========================\nQUY TRÌNH THỰC HIỆN BẮT BUỘC\n========================\n\n1. GỌI CÔNG CỤ (TOOL CALLING):\n- Bắt buộc phải sử dụng công cụ được cung cấp (Kiểm tra danh sách kỹ năng) để truy xuất toàn bộ danh sách kỹ năng và \"skill_id\" tương ứng hiện có trong hệ thống hay truy xuất danh sách jobs hoặc thông tin chi tiết của 1 jobs khi mà cần kiểm tra độ phù hợp với jobs khác.\n- Không được tự tạo kỹ năng hoặc ID.\n\n2. TRÍCH XUẤT THÔNG TIN:\n- Lấy đầy đủ thông tin từ CV:\n  + Thông tin cá nhân\n  + Học vấn\n  + Kinh nghiệm làm việc\n  + Kỹ năng\n  + Dự án (nếu có)\n\n3. ĐỐI CHIẾU KỸ NĂNG:\n- So sánh kỹ năng trong CV với danh sách kỹ năng hệ thống.\n- Chỉ giữ lại các kỹ năng TRÙNG KHỚP.\n- Lưu lại \"skill_id\" tương ứng.\n- Không được suy đoán hoặc thêm kỹ năng không có trong CV.\n\n4. ĐÁNH GIÁ VÀ CHẤM ĐIỂM:\nThực hiện chấm điểm theo thang 1–10 (có thể dùng số thập phân), dựa trên các tiêu chí có trọng số sau:\n\na. Mức độ phù hợp kỹ năng (Skill Matching) – 40%\nĐánh giá dựa trên tỷ lệ kỹ năng trùng khớp giữa CV và JD, đồng thời ưu tiên các kỹ năng cốt lõi:\n- Từ 9 đến 10 điểm: Ứng viên có mức độ trùng khớp trên 90% kỹ năng yêu cầu, đáp ứng đầy đủ các kỹ năng cốt lõi và có thêm các kỹ năng nâng cao liên quan.\n- Từ 7 đến 8.9 điểm: Ứng viên đáp ứng khoảng 70%–89% yêu cầu, chỉ thiếu một số kỹ năng không quan trọng.\n- Từ 5 đến 6.9 điểm: Mức độ trùng khớp đạt khoảng 40%–69%, thiếu một số kỹ năng quan trọng.\n- Từ 3 đến 4.9 điểm: Mức độ trùng khớp dưới 40%, thiếu phần lớn các kỹ năng chính.\n- Từ 1 đến 2.9 điểm: Hầu như không có kỹ năng liên quan đến vị trí ứng tuyển.\n\nb. Kinh nghiệm làm việc (Experience) – 30%\nĐánh giá dựa trên số năm kinh nghiệm và mức độ liên quan với vị trí ứng tuyển:\n- Từ 9 đến 10 điểm: Ứng viên có số năm kinh nghiệm đáp ứng hoặc vượt yêu cầu của JD, làm việc đúng domain và đã đảm nhiệm các vị trí hoặc dự án tương đương.\n- Từ 7 đến 8.9 điểm: Ứng viên có kinh nghiệm gần đủ, domain tương đối phù hợp và có khả năng thích nghi nhanh với công việc.\n- Từ 5 đến 6.9 điểm: Ứng viên có kinh nghiệm ít hơn yêu cầu, domain có liên quan nhưng chưa trực tiếp.\n- Từ 3 đến 4.9 điểm: Kinh nghiệm thấp, làm việc trong domain khác, khó áp dụng vào vị trí ứng tuyển.\n- Từ 1 đến 2.9 điểm: Không có kinh nghiệm liên quan.\n\nc. Trình độ học vấn (Education) – 15%\nĐánh giá vai trò hỗ trợ dựa trên chuyên ngành và bằng cấp:\n- Từ 9 đến 10 điểm: Chuyên ngành đào tạo hoàn toàn phù hợp với vị trí ứng tuyển, có thể kèm theo yếu tố nổi bật như thành tích cao.\n- Từ 7 đến 8.9 điểm: Chuyên ngành có liên quan và bằng cấp phù hợp.\n- Từ 5 đến 6.9 điểm: Chuyên ngành có liên quan ở mức độ thấp.\n- Từ 3 đến 4.9 điểm: Chuyên ngành không liên quan đến vị trí ứng tuyển.\n- Từ 1 đến 2.9 điểm: Không có thông tin học vấn rõ ràng hoặc không đủ dữ liệu để đánh giá.\n\nd. Mức độ phù hợp tổng thể (Overall Fit) – 15%\nĐánh giá sự tương thích tổng thể giữa ứng viên và JD:\n- Từ 9 đến 10 điểm: Hồ sơ thể hiện sự nhất quán cao giữa kỹ năng, kinh nghiệm và định hướng phát triển, ứng viên có thể đáp ứng công việc ngay.\n- Từ 7 đến 8.9 điểm: Ứng viên phù hợp tốt với vị trí, chỉ cần thời gian làm quen ngắn.\n- Từ 5 đến 6.9 điểm: Mức độ phù hợp trung bình, cần đào tạo thêm.\n- Từ 3 đến 4.9 điểm: Không phù hợp rõ ràng với vị trí.\n- Từ 1 đến 2.9 điểm: Không phù hợp tổng thể.\n\n=> Công thức định hướng:\nscore = (skill*0.4 + exp*0.3 + edu*0.15 + fit*0.15)\n\n5. TÓM TẮT (AI SUMMARY):\n- Viết 2–3 câu:\n  + Lý do đạt mức điểm\n  + Điểm mạnh\n  + Điểm yếu\n\n========================\nQUY TẮC CHẤM ĐIỂM (CHI TIẾT)\n========================\n\n- 9.0 – 10:\n  + Gần như hoàn hảo (>95% JD)\n  + Có thể onboard ngay không cần đào tạo\n\n- 8.0 – 8.9:\n  + Phù hợp tốt (~80–90%)\n  + Thiếu rất ít kỹ năng\n\n- 7.0 – 7.9:\n  + Đáp ứng cơ bản (~70%)\n  + Cần đào tạo thêm\n\n- 5.0 – 6.9:\n  + Không phù hợp vị trí hiện tại\n  + Có thể phù hợp vị trí khác\n\n- < 5.0:\n  + Không phù hợp hoàn toàn\n\n========================\nLOGIC CHUYỂN VỊ TRÍ (RE-MATCHING)\n========================\n\nKhi:\nscore < 7.0\n\nBẮT BUỘC thực hiện:\n\n1. Tìm vị trí khác trong cùng phòng ban từ hệ thống bằng tool \"Kiểm tra các vị trí tuyển dụng\" để có danh sách job_id phù hợp với ứng viên, rồi sẽ gọi lần lượt job_id để xem chi tiết mô tả vị trí ở tool \"Kiểm tra mô tả vị trí tuyển dụng\"\n\n2. Đánh giá lại ứng viên (re-score) với vị trí mới dựa trên:\n- Skill_ids\n- Kinh nghiệm\n- Học vấn\n\n3. Nếu tồn tại vị trí thỏa:\nre_score ≥ 8.0\n\n=> THÌ:\n- Cập nhật:\n  + \"job_id\" = vị trí mới\n  + \"score\" = re_score\n  + \"status\" = \"đã duyệt\"\n\n- AI Summary phải ghi rõ:\n  + Không phù hợp vị trí ban đầu\n  + Phù hợp vị trí mới\n  + Lý do chuyển\n\n4. Nếu không có vị trí phù hợp:\n- Giữ:\n  + \"status\" = \"từ chối\"\n\n========================\nQUY TẮC TRẠNG THÁI\n========================\n\n- score ≥ 7 → \"mới\"\n- re-matching thành công → \"đã duyệt\"\n- score < 7 và không match → \"từ chối\"\n\n========================\nQUY TẮC ĐỊNH DẠNG OUTPUT (BẮT BUỘC)\n========================\n\n- CHỈ trả về duy nhất 1 JSON hợp lệ\n- Không thêm text ngoài JSON\n\nSchema:\n\n{\n  \"full_name\": \"string\",\n  \"date_of_birth\": \"YYYY-MM-DD\",\n  \"gender\": \"male | female | other\",\n  \"phone\": \"string\",\n  \"email\": \"string\",\n  \"specific_address\": \"string\",\n  \"job_id\": number,\n  \"score\": number,\n  \"status\": \"mới | từ chối | đã duyệt\",\n  \"applied_date\": \"YYYY-MM-DD\",\n  \"ai_summary\": \"string\",\n  \"education\": [\n    {\n      \"degree\": \"string\",\n      \"institution\": \"string\",\n      \"major\": \"string\",\n      \"start_year\": \"number\",\n      \"end_year\": \"number\"\n    }\n  ],\n  \"experience\": [\n    {\n      \"company_name\": \"string\",\n      \"position\": \"string\",\n      \"start_date\": \"YYYY-MM-DD\",\n      \"end_date\": \"YYYY-MM-DD\",\n      \"description\": \"string\"\n    }\n  ],\n  \"skill_ids\": [number],\n  \"facebook\": \"string\",\n  \"cv_link\": \"string\",\n  \"portfolio_link\": \"string\",\n  \"links\": [\n    {\n      \"label\": \"string\",\n      \"url\": \"string\"\n    }\n  ]\n}\n\n========================\nRÀNG BUỘC QUAN TRỌNG\n========================\n- Bắt buộc tìm đúng email\n- Không được tự tạo skill_id\n- Không được suy đoán thông tin không có trong CV\n- Không được trả về text ngoài JSON\n- Luôn ưu tiên tính chính xác hơn suy diễn, nếu không có thông tin thì để rỗng\n- Phải thực hiện re-matching khi score < 7"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -128,
+        -464
+      ],
+      "id": "ee499fdb-2cbd-4c58-ac61-f2a9dd03e735",
+      "name": "AI Agent2"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Gọi công cụ này để lấy danh sách toàn bộ các kỹ năng (skills) hợp lệ từ hệ thống. Hãy sử dụng nó khi bạn cần xác thực danh sách kỹ năng đầu vào. Nhiệm vụ của bạn: Sau khi có danh sách từ công cụ này, hãy đối chiếu với dữ liệu đầu vào, chỉ giữ lại những kỹ năng có tồn tại trong danh sách trả về và loại bỏ các kỹ năng không hợp lệ.",
+        "url": "https://smartcv.phucmeo.id.vn/api/v1/skills",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        32,
+        -80
+      ],
+      "id": "3e8541d3-b6cc-4594-add1-89eb79d6aff5",
+      "name": "Kiểm tra các kỹ năng2",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "XcCAyjRQtcLhjVWG",
+          "name": "SmartCV-Auto"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Upload file').item.json.id }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        -240,
+        -96
+      ],
+      "id": "c0c74fbb-f701-4cc5-8f3c-14c2f7f5bc75",
+      "name": "Postgres Chat Memory3",
+      "credentials": {
+        "postgres": {
+          "id": "ZVdExmKdcVm1mtDt",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Gọi công cụ này để tra cứu thông tin mô tả chi tiết (JD) dựa trên danh sách các job_id. Hãy sử dụng nó ngay sau khi bạn đã lấy được danh sách job_id từ công cụ 'Kiểm tra các vị trí tuyển dụng'. Nhiệm vụ của bạn: Sau khi nhận được thông tin chi tiết của từng vị trí, hãy thực hiện đánh giá chuyên sâu bằng cách so khớp (match) các yêu cầu về kỹ năng, kinh nghiệm và trình độ với hồ sơ của ứng viên hiện tại. Lọc và chỉ trả về thông tin của công việc có độ phù hợp cao nhất. Nếu qua quá trình đánh giá không có bất kỳ vị trí nào đáp ứng đủ tiêu chí, bắt buộc trả về kết quả: 'Không có vị trí phù hợp'. Có thể gọi nhiều lần tool này để lấy đủ hết từng id trong danh sách jods_id.",
+        "url": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('URL', `URL là \"https://smartcv.phucmeo.id.vn/api/v1/jobs/{job_id}\"\nThay thế {job_id} bằng id phù hợp cần xem chi tiết mô tả vị trí công việc`, 'string') }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        112,
+        -224
+      ],
+      "id": "b601358c-bba1-4183-b837-41bfb51f4b4d",
+      "name": "Kiểm tra mô tả vị trí tuyển dụng1",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "XcCAyjRQtcLhjVWG",
+          "name": "SmartCV-Auto"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('AI Agent2').item.json.output.status }}",
+                    "rightValue": "duyệt",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "75503a46-8d71-4345-ae94-258d70de1975"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Vị trí mới"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "dc5eeecc-a179-473b-8044-423ced00bfaf",
+                    "leftValue": "={{ $('AI Agent2').item.json.output.status }}",
+                    "rightValue": "từ chối",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Ko phù hợp"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        640,
+        -464
+      ],
+      "id": "0eb010c4-3695-4fda-9b56-05cb082f0db0",
+      "name": "Switch1"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('AI Agent2').item.json.output.email }}",
+        "subject": "[SmartCV] Cập nhật kết quả ứng tuyển và đề xuất cơ hội mới",
+        "message": "=<!DOCTYPE html>\n<html lang=\"vi\">\n<head>\n    <meta charset=\"UTF-8\">\n    <style>\n        body {\n            font-family: Arial, sans-serif;\n            line-height: 1.6;\n            color: #333;\n            max-width: 600px;\n            margin: 20px auto;\n        }\n        .highlight {\n            color: #0066cc; \n            font-weight: bold;\n        }\n        .new-opportunity {\n            color: #e67e22; \n            font-weight: bold;\n        }\n        .divider {\n            border-top: 1px solid #eee;\n            margin: 20px 0;\n        }\n        .footer {\n            margin-top: 25px;\n            padding-top: 10px;\n            border-top: 1px solid #eee;\n            font-size: 0.9em;\n            color: #666;\n        }\n    </style>\n</head>\n<body>\n\n    <p>Chào <strong>{{ $('Tách lấy họ tên và vị trí ứng tuyển').item.json['Họ và tên'] }}</strong>,</p>\n\n    <p>Cảm ơn bạn đã dành thời gian tham gia quy trình tuyển dụng cho vị trí <span class=\"highlight\">{{ $('Tách lấy họ tên và vị trí ứng tuyển').item.json['Vị trí ứng tuyển'] }}</span> tại <strong>SmartCV</strong>.</p>\n    \n    <p>Sau khi xem xét kỹ lưỡng hồ sơ và kết quả trao đổi, chúng tôi nhận thấy kỹ năng của bạn chưa hoàn toàn phù hợp với yêu cầu hiện tại của vị trí này. Tuy nhiên, đội ngũ tuyển dụng đánh giá rất cao năng lực và tiềm năng của bạn.</p>\n\n    <div class=\"divider\"></div>\n\n    <p>Tin tốt là chúng tôi đang có một cơ hội tại vị trí <span class=\"new-opportunity\">{{ $json.title }}</span> mà chúng tôi tin rằng <span class=\"new-opportunity\">phù hợp hơn</span> với thế mạnh và kinh nghiệm của bạn.</p>\n\n    <p>Bộ phận Nhân sự (HR) sẽ <span class=\"highlight\">sớm liên lạc trực tiếp</span> với bạn trong 1-2 ngày tới để trao đổi chi tiết hơn về cơ hội mới này.</p>\n\n    <p>Rất mong có cơ hội được hợp tác cùng bạn ở một vai trò mới!</p>\n\n    <div class=\"footer\">\n        Trân trọng,<br>\n        <strong>SmartCV - Nơi hội tụ các nhân tài</strong>\n    </div>\n\n</body>\n</html>",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "HR SmartCV"
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        880,
+        -432
+      ],
+      "id": "9c6a8d85-88ab-45d6-9809-a5c4dd791173",
+      "name": "Gửi đề xuất vị trí phù hợp",
+      "webhookId": "77351d12-4381-4ef1-9ad5-7a800f23f53b",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "YBpWUx8xglTLXWuA",
+          "name": "Gmail (nguyentrongphuc)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('AI Agent2').item.json.output.email }}",
+        "subject": "[SmartCV] Cập nhật kết quả ứng tuyển và đề xuất cơ hội mới",
+        "message": "=<!DOCTYPE html>\n<html lang=\"vi\">\n<head>\n    <meta charset=\"UTF-8\">\n    <style>\n        body {\n            font-family: \"Segoe UI\", Tahoma, Geneva, Verdana, sans-serif;\n            line-height: 1.6;\n            color: #444;\n            max-width: 600px;\n            margin: 20px auto;\n        }\n        .highlight-gray {\n            color: #6c757d; /* Màu xám trung tính, chuyên nghiệp */\n            font-weight: bold;\n        }\n        .content {\n            border-top: 1px solid #eee;\n            margin-top: 15px;\n            padding-top: 15px;\n        }\n        .footer {\n            margin-top: 25px;\n            padding-top: 15px;\n            border-top: 1px solid #eee;\n            font-size: 0.9em;\n            color: #888;\n        }\n    </style>\n</head>\n<body>\n\n    <p>Chào <strong>{{ $('Tách lấy họ tên và vị trí ứng tuyển').item.json['Họ và tên'] }}</strong>,</p>\n\n    <p>Lời đầu tiên, <strong>SmartCV</strong> xin cảm ơn bạn đã dành thời gian và tâm huyết quan tâm đến vị trí <span class=\"highlight-gray\">{{ $('Tách lấy họ tên và vị trí ứng tuyển').item.json['Vị trí ứng tuyển'] }}</span> của chúng tôi.</p>\n    \n    <div class=\"content\">\n        <p>Sau khi xem xét kỹ lưỡng hồ sơ và quá trình trao đổi, chúng tôi rất tiếc phải thông báo rằng bạn <span class=\"highlight-gray\">chưa phù hợp</span> với các tiêu chí tuyển dụng hiện tại cho vị trí này.</p>\n        \n        <p>Đây là một quyết định khó khăn vì chúng tôi đánh giá cao những nỗ lực và tiềm năng mà bạn đã thể hiện. Tuy nhiên, tại thời điểm này, chúng tôi cần một ứng viên có sự tương thích sát hơn với yêu cầu chuyên biệt của dự án.</p>\n    </div>\n\n    <p>Chúng tôi sẽ lưu giữ thông tin của bạn trong <span class=\"highlight-gray\">nguồn dữ liệu ứng viên tiềm năng</span> và sẽ chủ động liên hệ nếu có các cơ hội khác phù hợp hơn trong tương lai.</p>\n\n    <p>Chúc bạn sớm tìm được bến đỗ nghề nghiệp như ý và gặt hái được nhiều thành công.</p>\n\n    <div class=\"footer\">\n        Trân trọng,<br>\n        <strong>SmartCV - Nơi hội tụ các nhân tài</strong>\n    </div>\n\n</body>\n</html>",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "HR SmartCV"
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        880,
+        -272
+      ],
+      "id": "b696cde5-cccf-4e37-9ac2-0ca2f41b2394",
+      "name": "Gửi mail từ chối",
+      "webhookId": "77351d12-4381-4ef1-9ad5-7a800f23f53b",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "YBpWUx8xglTLXWuA",
+          "name": "Gmail (nguyentrongphuc)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('AI Agent1').item.json.output.email }}",
+        "subject": "[SmartCV] Cập nhật kết quả ứng tuyển và đề xuất cơ hội mới",
+        "message": "=<!DOCTYPE html>\n<html lang=\"vi\">\n<head>\n    <meta charset=\"UTF-8\">\n    <style>\n        body {\n            font-family: Arial, sans-serif;\n            line-height: 1.6;\n            color: #333;\n            max-width: 600px;\n            margin: 20px auto;\n        }\n        .highlight {\n            color: #0066cc; \n            font-weight: bold;\n        }\n        .new-opportunity {\n            color: #e67e22; \n            font-weight: bold;\n        }\n        .divider {\n            border-top: 1px solid #eee;\n            margin: 20px 0;\n        }\n        .footer {\n            margin-top: 25px;\n            padding-top: 10px;\n            border-top: 1px solid #eee;\n            font-size: 0.9em;\n            color: #666;\n        }\n    </style>\n</head>\n<body>\n\n    <p>Chào <strong>{{ $('Webhook').item.json.body.full_name }}</strong>,</p>\n\n    <p>Cảm ơn bạn đã dành thời gian tham gia quy trình tuyển dụng cho vị trí <span class=\"highlight\">{{ $('Webhook').item.json.body.job_title }}</span> tại <strong>SmartCV</strong>.</p>\n    \n    <p>Sau khi xem xét kỹ lưỡng hồ sơ và kết quả trao đổi, chúng tôi nhận thấy kỹ năng của bạn chưa hoàn toàn phù hợp với yêu cầu hiện tại của vị trí này. Tuy nhiên, đội ngũ tuyển dụng đánh giá rất cao năng lực và tiềm năng của bạn.</p>\n\n    <div class=\"divider\"></div>\n\n    <p>Tin tốt là chúng tôi đang có một cơ hội tại vị trí <span class=\"new-opportunity\">{{ $json.title }}</span> mà chúng tôi tin rằng <span class=\"new-opportunity\">phù hợp hơn</span> với thế mạnh và kinh nghiệm của bạn.</p>\n\n    <p>Bộ phận Nhân sự (HR) sẽ <span class=\"highlight\">sớm liên lạc trực tiếp</span> với bạn trong 1-2 ngày tới để trao đổi chi tiết hơn về cơ hội mới này.</p>\n\n    <p>Rất mong có cơ hội được hợp tác cùng bạn ở một vai trò mới!</p>\n\n    <div class=\"footer\">\n        Trân trọng,<br>\n        <strong>SmartCV - Nơi hội tụ các nhân tài</strong>\n    </div>\n\n</body>\n</html>",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "HR SmartCV"
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        784,
+        -1184
+      ],
+      "id": "339f707c-fc97-4147-9329-e55b7a5f09f9",
+      "name": "Gửi đề xuất vị trí phù hợp 01",
+      "webhookId": "77351d12-4381-4ef1-9ad5-7a800f23f53b",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "YBpWUx8xglTLXWuA",
+          "name": "Gmail (nguyentrongphuc)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('AI Agent1').item.json.output.email }}",
+        "subject": "[SmartCV] Cập nhật kết quả ứng tuyển và đề xuất cơ hội mới",
+        "message": "=<!DOCTYPE html>\n<html lang=\"vi\">\n<head>\n    <meta charset=\"UTF-8\">\n    <style>\n        body {\n            font-family: \"Segoe UI\", Tahoma, Geneva, Verdana, sans-serif;\n            line-height: 1.6;\n            color: #444;\n            max-width: 600px;\n            margin: 20px auto;\n        }\n        .highlight-gray {\n            color: #6c757d; /* Màu xám trung tính, chuyên nghiệp */\n            font-weight: bold;\n        }\n        .content {\n            border-top: 1px solid #eee;\n            margin-top: 15px;\n            padding-top: 15px;\n        }\n        .footer {\n            margin-top: 25px;\n            padding-top: 15px;\n            border-top: 1px solid #eee;\n            font-size: 0.9em;\n            color: #888;\n        }\n    </style>\n</head>\n<body>\n\n    <p>Chào <strong>{{ $('Webhook').item.json.body.full_name }}</strong>,</p>\n\n    <p>Lời đầu tiên, <strong>SmartCV</strong> xin cảm ơn bạn đã dành thời gian và tâm huyết quan tâm đến vị trí <span class=\"highlight-gray\">{{ $('Webhook').item.json.body.job_title }}</span> của chúng tôi.</p>\n    \n    <div class=\"content\">\n        <p>Sau khi xem xét kỹ lưỡng hồ sơ và quá trình trao đổi, chúng tôi rất tiếc phải thông báo rằng bạn <span class=\"highlight-gray\">chưa phù hợp</span> với các tiêu chí tuyển dụng hiện tại cho vị trí này.</p>\n        \n        <p>Đây là một quyết định khó khăn vì chúng tôi đánh giá cao những nỗ lực và tiềm năng mà bạn đã thể hiện. Tuy nhiên, tại thời điểm này, chúng tôi cần một ứng viên có sự tương thích sát hơn với yêu cầu chuyên biệt của dự án.</p>\n    </div>\n\n    <p>Chúng tôi sẽ lưu giữ thông tin của bạn trong <span class=\"highlight-gray\">nguồn dữ liệu ứng viên tiềm năng</span> và sẽ chủ động liên hệ nếu có các cơ hội khác phù hợp hơn trong tương lai.</p>\n\n    <p>Chúc bạn sớm tìm được bến đỗ nghề nghiệp như ý và gặt hái được nhiều thành công.</p>\n\n    <div class=\"footer\">\n        Trân trọng,<br>\n        <strong>SmartCV - Nơi hội tụ các nhân tài</strong>\n    </div>\n\n</body>\n</html>",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "HR SmartCV"
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        784,
+        -1008
+      ],
+      "id": "fa3f22d5-3af0-4286-b0ff-7eae8fc5b6c5",
+      "name": "Gửi mail từ chối 01",
+      "webhookId": "77351d12-4381-4ef1-9ad5-7a800f23f53b",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "YBpWUx8xglTLXWuA",
+          "name": "Gmail (nguyentrongphuc)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "markAsRead",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}"
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        448,
+        -464
+      ],
+      "id": "cdce1c3a-0f2d-4d66-a39b-9b597c9b38be",
+      "name": "Mark a message as read",
+      "webhookId": "b70712c9-1f54-4d99-b67a-b1d786e7454d",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "YBpWUx8xglTLXWuA",
+          "name": "Gmail (nguyentrongphuc)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://smartcv.phucmeo.id.vn/api/v1/jobs/{{ $('HTTP Request2').item.json.job_id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        880,
+        -592
+      ],
+      "id": "c3d1585b-71fd-4300-a4bd-61c5c15d05ee",
+      "name": "GET thông tin vị trí ứng tuyển2",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "XcCAyjRQtcLhjVWG",
+          "name": "SmartCV-Auto"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://smartcv.phucmeo.id.vn/api/v1/jobs/{{ $('HTTP Request').item.json.job_id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        784,
+        -1344
+      ],
+      "id": "a4e369dc-a5b4-44fa-b4a0-0469cfb6dac2",
+      "name": "GET thông tin vị trí ứng tuyển3",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "XcCAyjRQtcLhjVWG",
+          "name": "SmartCV-Auto"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Trích xuất text từ PDF",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Tách lấy họ tên và vị trí ứng tuyển",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Upload file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tách lấy họ tên và vị trí ứng tuyển": {
+      "main": [
+        [
+          {
+            "node": "GET ID vị trí ứng tuyển1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trích xuất text từ PDF": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Upload file1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "GET ID vị trí ứng tuyển",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Trích xuất text từ PDF 02",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trích xuất text từ PDF 02": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Gemini1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Kiểm tra các vị trí tuyển dụng": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET ID vị trí ứng tuyển": {
+      "main": [
+        [
+          {
+            "node": "GET thông tin vị trí ứng tuyển",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Structured Output Parser",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET thông tin vị trí ứng tuyển": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Upload file1": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Kiểm tra các kỹ năng": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET ID vị trí ứng tuyển1": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload file": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET thông tin vị trí ứng tuyển1": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "AI Agent2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "GET thông tin vị trí ứng tuyển1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Kiểm tra mô tả vị trí tuyển dụng": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "GET thông tin vị trí ứng tuyển3",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Gửi mail từ chối 01",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent2",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Kiểm tra các vị trí tuyển dụng1": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent2",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser2": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent2",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model5": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Structured Output Parser2",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent2": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Kiểm tra các kỹ năng2": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent2",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory3": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent2",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Kiểm tra mô tả vị trí tuyển dụng1": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent2",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch1": {
+      "main": [
+        [
+          {
+            "node": "GET thông tin vị trí ứng tuyển2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Gửi mail từ chối",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request2": {
+      "main": [
+        [
+          {
+            "node": "Mark a message as read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark a message as read": {
+      "main": [
+        [
+          {
+            "node": "Switch1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET thông tin vị trí ứng tuyển2": {
+      "main": [
+        [
+          {
+            "node": "Gửi đề xuất vị trí phù hợp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET thông tin vị trí ứng tuyển3": {
+      "main": [
+        [
+          {
+            "node": "Gửi đề xuất vị trí phù hợp 01",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "f814612c-0049-45c4-99bf-8908c79adc45",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5a38ffae1cf93921ba3f4162819422b4c69848b6011f05f73be2f0f57ce28553"
+  },
+  "id": "3lmblpINEGqp7acw",
+  "tags": []
+}

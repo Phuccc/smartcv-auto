@@ -1,0 +1,256 @@
+{% extends "base.html" %}
+
+{% block title %}Bảng điều khiển | SmartCV Auto{% endblock %}
+
+{% block content %}
+<div class="px-10 py-8">
+    <div class="max-w-7xl mx-auto">
+        <div class="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+                <h2 class="text-3xl font-black text-slate-900 tracking-tight">Bảng điều khiển</h2>
+                <p class="text-slate-500 mt-1 text-sm font-medium">Tổng quan hoạt động tuyển dụng trực tuyến.</p>
+            </div>
+            <div>
+                <form id="period-form" action="/ui/dashboard" method="GET">
+                    <select name="period" onchange="document.getElementById('period-form').submit()" class="bg-card-white border border-slate-200 text-slate-700 text-sm font-bold rounded-lg focus:ring-primary focus:border-primary block w-full p-2 py-1.5 shadow-sm cursor-pointer outline-none">
+                        <option value="7d" {% if period == '7d' %}selected{% endif %}>7 ngày qua</option>
+                        <option value="30d" {% if period == '30d' %}selected{% endif %}>30 ngày qua</option>
+                        <option value="this_month" {% if period == 'this_month' %}selected{% endif %}>Tháng này</option>
+                        <option value="this_year" {% if period == 'this_year' %}selected{% endif %}>Năm nay</option>
+                        <option value="all" {% if period == 'all' %}selected{% endif %}>Toàn thời gian</option>
+                    </select>
+                </form>
+            </div>
+        </div>
+        
+        <!-- 4 Metric Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="bg-card-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
+                <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                    <span class="material-symbols-outlined text-2xl">work</span>
+                </div>
+                <div>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.1em]">Đang Tuyển</p>
+                    <p class="text-2xl font-black text-slate-900 mt-0.5">{{ open_jobs }}</p>
+                </div>
+            </div>
+            <div class="bg-card-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
+                <div class="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center text-blue-600 shrink-0">
+                    <span class="material-symbols-outlined text-2xl">group</span>
+                </div>
+                <div>
+                    <a href="/ui/candidates" class="text-[10px] font-bold text-slate-400 hover:text-primary uppercase tracking-[0.1em]">Tổng Ứng Viên</a>
+                    <p class="text-2xl font-black text-slate-900 mt-0.5">{{ total_cands }}</p>
+                </div>
+            </div>
+            <div class="bg-card-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow relative overflow-hidden">
+                <div class="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center text-green-600 shrink-0">
+                    <span class="material-symbols-outlined text-2xl">person_add</span>
+                </div>
+                <div>
+                    <a href="/ui/candidates" class="text-[10px] font-bold text-slate-400 hover:text-primary uppercase tracking-[0.1em]">Ứng Viên Mới</a>
+                    <div class="flex items-baseline gap-2 mt-0.5">
+                        <p class="text-2xl font-black text-slate-900">{{ new_cands }}</p>
+                        {% if new_cands > 0 %}
+                            <span class="text-xs font-bold text-green-600 flex items-center"><span class="material-symbols-outlined text-[14px]">arrow_upward</span></span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="bg-card-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
+                <div class="w-12 h-12 rounded-xl bg-orange-100 flex items-center justify-center text-orange-600 shrink-0">
+                    <span class="material-symbols-outlined text-2xl">calendar_today</span>
+                </div>
+                <div class="flex-1">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.1em]">Lịch sắp tới</p>
+                    <p class="text-2xl font-black text-slate-900 mt-0.5">{{ upcoming_ints_count }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Content Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- Left Column: Upcoming Interviews -->
+            <div class="lg:col-span-2 space-y-6">
+                
+                <!-- Trend Chart -->
+                <div class="bg-card-white rounded-xl shadow-sm border border-slate-200 p-6">
+                    <h3 class="text-lg font-black text-slate-900 border-b border-slate-100 pb-4 mb-4">Lưu lượng ứng tuyển</h3>
+                    <div class="relative h-64 w-full">
+                        <canvas id="appTrendChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="bg-card-white rounded-xl shadow-sm border border-slate-200 p-6">
+                    <div class="flex justify-between items-center border-b border-slate-100 pb-4 mb-4">
+                        <h3 class="text-lg font-black text-slate-900">Lịch phỏng vấn sắp tới</h3>
+                        <a href="/ui/interviews" class="text-xs font-bold text-primary hover:underline flex items-center gap-1">Xem tất cả <span class="material-symbols-outlined text-sm">arrow_forward</span></a>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        {% for interview in upcoming_interviews %}
+                        <div class="flex items-start gap-4 p-4 rounded-lg border border-slate-100 hover:border-primary/30 transition-colors group">
+                            <div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-lg font-bold text-slate-400 shrink-0">
+                                {{ interview.candidate.full_name[:1] | upper if interview.candidate else '?' }}
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-bold text-slate-900 truncate">{{ interview.candidate.full_name if interview.candidate else 'Ứng viên chưa rõ' }}</p>
+                                <p class="text-xs font-medium text-slate-500 truncate">{{ interview.candidate.job.title if interview.candidate and interview.candidate.job else 'Vị trí không xác định' }}</p>
+                                <div class="flex items-center gap-3 mt-2">
+                                    <span class="inline-flex items-center text-[10px] font-bold text-slate-600 uppercase">
+                                        <span class="material-symbols-outlined text-[14px] mr-1 text-primary">schedule</span> 
+                                        {{ interview.scheduled_at.strftime('%H:%M - %d/%m/%Y') }}
+                                    </span>
+                                    {% if interview.interview_type == 'online' %}
+                                        <span class="px-2 py-0.5 rounded text-[9px] font-bold bg-blue-50 text-blue-600 uppercase">Online</span>
+                                    {% else %}
+                                        <span class="px-2 py-0.5 rounded text-[9px] font-bold bg-orange-50 text-orange-600 uppercase">Offline</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <a href="/ui/interviews/{{ interview.id }}" class="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-primary group-hover:text-white transition-colors shrink-0">
+                                <span class="material-symbols-outlined text-sm">chevron_right</span>
+                            </a>
+                        </div>
+                        {% else %}
+                        <div class="py-8 text-center bg-slate-50 rounded-lg border border-dashed border-slate-200">
+                            <span class="material-symbols-outlined text-3xl text-slate-300 mb-2">event_busy</span>
+                            <p class="text-sm font-medium text-slate-500">Chưa có lịch sắp tới nào</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right Column: Candidate Pipeline & Metrics -->
+            <div class="space-y-6">
+                
+                <!-- Conversion Metrics -->
+                <div class="bg-card-white rounded-xl shadow-sm border border-slate-200 p-6">
+                    <h3 class="text-lg font-black text-slate-900 border-b border-slate-100 pb-4 mb-4">Hiệu suất tuyển dụng</h3>
+                    <div class="space-y-4">
+                        <div class="bg-emerald-50 rounded-lg p-4 border border-emerald-100 flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center">
+                                    <span class="material-symbols-outlined">thumb_up</span>
+                                </div>
+                                <div>
+                                    <p class="text-xs font-bold text-slate-500 uppercase tracking-tight">Tỷ lệ nhận Offer</p>
+                                    <p class="text-xl font-black text-emerald-700 leading-tight">{{ offer_acceptance_rate }}%</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-blue-50 rounded-lg p-4 border border-blue-100 flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
+                                    <span class="material-symbols-outlined">how_to_reg</span>
+                                </div>
+                                <div>
+                                    <p class="text-xs font-bold text-slate-500 uppercase tracking-tight">Tuyển thành công</p>
+                                    <p class="text-xl font-black text-blue-700 leading-tight">{{ total_hires }} người</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Candidate Pipeline widget -->
+                <div class="bg-card-white rounded-xl shadow-sm border border-slate-200 p-6">
+                    <h3 class="text-lg font-black text-slate-900 border-b border-slate-100 pb-4 mb-4">Phễu Ứng Viên</h3>
+                    
+                    <div class="space-y-4">
+                        {% set pipeline_order = ['mới', 'duyệt', 'phỏng vấn', 'gửi offer', 'đã tuyển', 'từ chối'] %}
+                        {% set colors = {'mới': 'text-amber-600 bg-amber-50', 'duyệt': 'text-blue-600 bg-blue-50', 'phỏng vấn': 'text-purple-600 bg-purple-50', 'gửi offer': 'text-emerald-600 bg-emerald-50', 'đã tuyển': 'text-green-600 bg-green-50', 'từ chối': 'text-red-500 bg-red-50'} %}
+                        
+                        {% for status_key in pipeline_order %}
+                            {% set count = status_counts.get(status_key, 0) %}
+                            {% set percent = (count / total_cands * 100) | round if total_cands > 0 else 0 %}
+                            <div class="flex items-center justify-between group">
+                                <div class="flex items-center gap-3">
+                                    <span class="w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-black {{ colors.get(status_key, 'bg-slate-100 text-slate-500') }}">{{ count }}</span>
+                                    <span class="text-xs font-bold text-slate-600 uppercase tracking-tight">{{ status_key }}</span>
+                                </div>
+                                <div class="w-24 h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                                    <div class="h-full rounded-full transition-all bg-slate-300 group-hover:bg-primary pipeline-progress" data-width="{{ percent }}%"></div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- scripts -->
+<script id="chart-data" type="application/json">
+    {
+        "labels": {{ chart_labels | tojson | safe }},
+        "data": {{ chart_data | tojson | safe }}
+    }
+</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Set pipeline progress
+    document.querySelectorAll('.pipeline-progress').forEach(el => {
+        el.style.width = el.dataset.width;
+    });
+
+    // Render Chart
+    const ctx = document.getElementById('appTrendChart');
+    if (ctx) {
+        const chartDataEl = document.getElementById('chart-data');
+        const chartData = chartDataEl ? JSON.parse(chartDataEl.textContent) : { labels: [], data: [] };
+        
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: chartData.labels,
+                datasets: [{
+                    label: 'Ứng viên mới',
+                    data: chartData.data,
+                    borderColor: '#4f46e5',
+                    backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                    borderWidth: 2,
+                    pointBackgroundColor: '#fff',
+                    pointBorderColor: '#4f46e5',
+                    pointHoverBackgroundColor: '#4f46e5',
+                    pointHoverBorderColor: '#fff',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#1e293b',
+                        padding: 12,
+                        titleFont: { family: 'Inter', size: 13, weight: 'bold' },
+                        bodyFont: { family: 'Inter', size: 14, weight: 'normal' },
+                        displayColors: false,
+                        callbacks: {
+                            label: function(context) { return context.parsed.y + ' ứng viên'; }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { precision: 0, font: { family: 'Inter' } },
+                        grid: { color: '#f1f5f9', drawBorder: false }
+                    },
+                    x: {
+                        ticks: { font: { family: 'Inter' }, maxTicksLimit: 10 },
+                        grid: { display: false, drawBorder: false }
+                    }
+                }
+            }
+        });
+    }
+
+</script>
+{% endblock %}

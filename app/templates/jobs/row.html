@@ -1,0 +1,45 @@
+<tr class="hover:bg-slate-50/70 transition-colors group {% if loop_index is defined and loop_index % 2 != 0 %}bg-slate-50/30{% endif %}" id="job-row-{{ job.id }}">
+    <td class="px-6 py-4">
+        <div class="flex flex-col">
+            <a href="/ui/jobs/{{ job.id }}/detail" hx-target="body" class="font-bold text-slate-900 group-hover:text-primary transition-colors cursor-pointer">{{ job.title }}</a>
+            <span class="text-[10px] text-slate-400 uppercase font-bold tracking-tight">ID: #{{ job.id }}</span>
+        </div>
+    </td>
+    <td class="px-4 py-4">
+        <span class="px-2.5 py-1 bg-slate-100 rounded-md text-[11px] font-bold text-slate-600 uppercase tracking-tight">
+            {{ job.department.name if job.department else "Không xác định" }}
+        </span>
+    </td>
+    <td class="px-4 py-4"><span class="text-slate-600 font-medium">{{ job.branch.name if job.branch else "Chưa rõ" }}</span></td>
+    <td class="px-4 py-4">
+        {% if job.status == 'open' %}
+        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-green-50 text-green-700 border border-green-200">
+            Đang tuyển
+        </span>
+        {% elif job.status == 'closed' %}
+        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-red-50 text-red-700 border border-red-200">
+            Đã đóng
+        </span>
+        {% else %}
+        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-orange-50 text-orange-700 border border-orange-200">
+            Tạm dừng
+        </span>
+        {% endif %}
+    </td>
+    <td class="text-center font-black text-slate-900 px-4 py-4">{{ job.candidates|length if job.candidates else 0 }}</td>
+    <td class="text-right px-6 py-4">
+        <div class="flex justify-end gap-0.5">
+            {% if request.state.user and request.state.user.role in ['admin', 'hr_staff'] %}
+            <button hx-delete="/ui/jobs/{{ job.id }}" hx-confirm="Bạn có chắc muốn xoá công việc này không? Thao tác này không thể hoàn tác." hx-target="#job-row-{{ job.id }}" hx-swap="outerHTML" class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors inline-flex items-center justify-center cursor-pointer" title="Xoá">
+                <span class="material-symbols-outlined text-lg">delete</span>
+            </button>
+            <button hx-get="/ui/jobs/form/{{ job.id }}" hx-target="#modal-container" hx-swap="innerHTML" class="p-2 text-slate-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-colors" title="Chỉnh sửa">
+                <span class="material-symbols-outlined text-lg">edit</span>
+            </button>
+            {% endif %}
+            <a href="/ui/jobs/{{ job.id }}/detail" hx-target="body" class="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors inline-flex items-center justify-center cursor-pointer" title="Xem chi tiết">
+                <span class="material-symbols-outlined text-lg">visibility</span>
+            </a>
+        </div>
+    </td>
+</tr>

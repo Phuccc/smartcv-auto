@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block title %}Danh sách tuyển dụng | SmartCV Auto{% endblock %}
+
+{% block content %}
+<div class="px-6 py-6 lg:px-10 shrink-0">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+            <nav class="flex items-center gap-2 text-[10px] font-bold text-slate-400 mb-1.5 uppercase tracking-widest">
+                <a class="hover:text-primary transition-colors" href="/ui/dashboard">Trang chủ</a>
+                <span class="material-symbols-outlined text-[10px]">chevron_right</span>
+                <span class="text-primary">Tuyển dụng</span>
+            </nav>
+            <div class="flex items-center gap-3">
+                <h2 class="text-2xl lg:text-3xl font-black text-slate-900 tracking-tight">Danh sách tuyển dụng</h2>
+            </div>
+            
+        </div>
+        <div class="flex items-center gap-3 w-full md:w-auto">
+            {% if request.state.user and request.state.user.role in ['admin', 'hr_staff'] %}
+            <button hx-get="/ui/jobs/form" hx-target="#modal-container" hx-swap="innerHTML" class="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary text-white font-bold hover:shadow-lg hover:shadow-primary/25 transition-all active:scale-95 text-sm whitespace-nowrap">
+                <span class="material-symbols-outlined text-xl">add</span>
+                Tạo công việc
+            </button>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="px-6 lg:px-10 mb-6 shrink-0">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-card-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                <span class="material-symbols-outlined text-2xl">folder_open</span>
+            </div>
+            <div>
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em]">Tổng công việc</p>
+                <p class="text-2xl font-black text-slate-900 mt-0.5">{{ total_jobs }}</p>
+            </div>
+        </div>
+        <div class="bg-card-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-green-50 flex items-center justify-center text-green-600 shrink-0">
+                <span class="material-symbols-outlined text-xl">play_circle</span>
+            </div>
+            <div>
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em]">Đang tuyển</p>
+                <p class="text-2xl font-black text-slate-900 mt-0.5">{{ open_jobs }}</p>
+            </div>
+        </div>
+        <div class="bg-card-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center text-red-600 shrink-0">
+                <span class="material-symbols-outlined text-xl">cancel</span>
+            </div>
+            <div>
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em]">Đã đóng</p>
+                <p class="text-2xl font-black text-slate-900 mt-0.5">{{ closed_jobs }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="px-6 lg:px-10 pb-8">
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+        <form id="jobs-filter-form" hx-get="/ui/jobs" hx-target="#jobs-list-container" class="flex-1 flex flex-col overflow-hidden">
+            <input type="hidden" name="page" value="1" id="filter-page">
+            <div class="bulk-actions-toolbar px-6 py-4 shrink-0 border-b border-slate-100 flex flex-wrap items-center gap-4 justify-between bg-slate-50/30">
+                <div class="flex items-center gap-3">
+                    <span class="text-sm font-bold text-slate-500">Danh sách việc làm</span>
+                </div>
+                <div class="flex items-center gap-3 flex-wrap">
+                    <div class="relative">
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 text-lg leading-none">search</span>
+                        <!-- Trigger keyup để tự động search, set page=1 trước khi call api -->
+                        <input name="q" id="job-search" value="{{ q }}" 
+                               hx-get="/ui/jobs" hx-include="#jobs-filter-form" hx-trigger="keyup changed delay:500ms, search" hx-target="#jobs-list-container" 
+                               oninput="document.getElementById('filter-page').value='1';"
+                               class="w-64 pl-10 pr-4 py-2 rounded-lg border-slate-200 bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm font-medium placeholder:text-slate-400 shadow-sm" placeholder="Tìm tên hoặc phòng ban..." type="search"/>
+                    </div>
+                    
+                    <select name="status" class="py-2 pl-4 pr-8 rounded-lg border-slate-200 bg-white text-sm font-medium focus:ring-2 focus:ring-primary/20 shadow-sm" 
+                            hx-get="/ui/jobs" hx-include="#jobs-filter-form" hx-target="#jobs-list-container" onchange="document.getElementById('filter-page').value='1';">
+                        <option value="">Tất cả trạng thái</option>
+                        <option value="open" {% if status == 'open' %}selected{% endif %}>Đang mở</option>
+                        <option value="closed" {% if status == 'closed' %}selected{% endif %}>Đã đóng</option>
+                        <option value="paused" {% if status == 'paused' %}selected{% endif %}>Tạm dừng</option>
+                    </select>
+
+                    <select name="department_id" class="py-2 pl-4 pr-8 rounded-lg border-slate-200 bg-white text-sm font-medium focus:ring-2 focus:ring-primary/20 shadow-sm" 
+                            hx-get="/ui/jobs" hx-include="#jobs-filter-form" hx-target="#jobs-list-container" onchange="document.getElementById('filter-page').value='1';">
+                        <option value="">Tất cả phòng ban</option>
+                        {% for dept in departments %}
+                        <option value="{{ dept.id }}" {% if department_id|string == dept.id|string %}selected{% endif %}>{{ dept.name }}</option>
+                        {% endfor %}
+                    </select>
+
+                    <div class="flex gap-2">
+                        <select name="sort_by" class="py-2 pl-4 pr-8 rounded-lg border-slate-200 bg-white text-sm font-medium focus:ring-2 focus:ring-primary/20 shadow-sm" 
+                                hx-get="/ui/jobs" hx-include="#jobs-filter-form" hx-target="#jobs-list-container" onchange="document.getElementById('filter-page').value='1';">
+                            <option value="created_at" {% if sort_by == 'created_at' %}selected{% endif %}>Ngày tạo</option>
+                            <option value="updated_at" {% if sort_by == 'updated_at' %}selected{% endif %}>Ngày cập nhật</option>
+                            <option value="title" {% if sort_by == 'title' %}selected{% endif %}>Tên công việc</option>
+                            <option value="quantity" {% if sort_by == 'quantity' %}selected{% endif %}>Số lượng tuyển dụng</option>
+                            <option value="status" {% if sort_by == 'status' %}selected{% endif %}>Trạng thái</option>
+                        </select>
+                        <select name="sort_order" class="py-2 pl-4 pr-8 rounded-lg border-slate-200 bg-white text-sm font-medium focus:ring-2 focus:ring-primary/20 shadow-sm" 
+                                hx-get="/ui/jobs" hx-include="#jobs-filter-form" hx-target="#jobs-list-container" onchange="document.getElementById('filter-page').value='1';">
+                            <option value="desc" {% if sort_order == 'desc' %}selected{% endif %}>Giảm dần</option>
+                            <option value="asc" {% if sort_order == 'asc' %}selected{% endif %}>Tăng dần</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="jobs-list-container" class="flex-col flex flex-1 relative">
+                {% include "jobs/partials/list_body.html" %}
+            </div>
+        </form>
+</div>
+{% endblock %}

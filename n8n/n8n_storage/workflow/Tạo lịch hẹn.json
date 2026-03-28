@@ -1,0 +1,246 @@
+{
+  "name": "Tạo lịch hẹn",
+  "nodes": [
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "nguyentrongphuc18012003@gmail.com",
+          "mode": "list",
+          "cachedResultName": "nguyentrongphuc18012003@gmail.com"
+        },
+        "start": "={{ $('Webhook').item.json.body.scheduled_at }}",
+        "end": "={{ $('Webhook').item.json.body.end_at }}",
+        "additionalFields": {
+          "attendees": [
+            "={{ $json.all_emails.join(',') }}"
+          ],
+          "conferenceDataUi": {
+            "conferenceDataValues": {
+              "conferenceSolution": "hangoutsMeet"
+            }
+          },
+          "sendUpdates": "all",
+          "summary": "=Phỏng vấn - {{ $('Webhook').item.json.body.candidate_name }} vị trí ứng tuyển {{ $('Webhook').item.json.body.job_title }}"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        176,
+        -416
+      ],
+      "id": "e6aed333-1cb3-4de3-b6c5-a629c182c11e",
+      "name": "Create an event",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "F0LUotuZBtWBYwp4",
+          "name": "Google Calendar (nguyentrongphuc)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Webhook').item.json.body.candidate_email }}",
+        "subject": "Thư mời phỏng vấn",
+        "message": "=<!DOCTYPE html>\n<html lang=\"vi\">\n<head>\n    <meta charset=\"UTF-8\">\n    <style>\n        body {\n            font-family: \"Segoe UI\", Tahoma, Geneva, Verdana, sans-serif;\n            line-height: 1.5;\n            color: #333;\n            max-width: 600px;\n            margin: 20px auto;\n        }\n        .highlight {\n            color: #007bff; /* Màu xanh nhấn mạnh */\n            font-weight: bold;\n        }\n        .content {\n            border-top: 1px solid #eee;\n            padding-top: 15px;\n        }\n        .footer {\n            margin-top: 25px;\n            padding-top: 10px;\n            border-top: 1px solid #eee;\n            font-size: 0.9em;\n            color: #666;\n        }\n    </style>\n</head>\n<body>\n\n    <p>Chào <strong>{{ $('Webhook').item.json.body.candidate_name }}</strong>,</p>\n\n    <p>Cảm ơn bạn đã quan tâm đến cơ hội nghề nghiệp tại <strong>SmartCV</strong>.</p>\n    \n    <p>Qua xem xét hồ sơ, chúng tôi trân trọng mời bạn tham gia buổi phỏng vấn cho vị trí <span class=\"highlight\">{{ $('Webhook').item.json.body.job_title }}</span>.</p>\n\n    <div class=\"content\">\n        <p><strong>Thông tin chi tiết:</strong></p>\n        <ul>\n            <li>Thời gian: <span class=\"highlight\">{{ $('Webhook').item.json.body.scheduled_at.toDateTime().toFormat(\"HH:mm 'ngày' dd 'tháng' MM 'năm' yyyy\") }}</span></li>\n            <li>Hình thức: Trực tiếp</li>\n            <li>Địa điểm: {{ $('Webhook').item.json.body.location }}</li>\n        </ul>\n    </div>\n\n    <p>Rất mong được gặp bạn!</p>\n\n    <div class=\"footer\">\n        Trân trọng,<br>\n        <strong>SmartCV - Nơi hội tụ các nhân tài</strong>\n    </div>\n\n</body>\n</html>",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "HR SmartCV"
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        176,
+        -208
+      ],
+      "id": "7d74226f-2b33-40be-bf09-cded9661a4b0",
+      "name": "Send a message",
+      "webhookId": "b07c4db7-5ef3-4940-9950-eeb974cd38b3",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "YBpWUx8xglTLXWuA",
+          "name": "Gmail (nguyentrongphuc)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "tao-lich-hen",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -448,
+        -304
+      ],
+      "id": "20e03d60-a7e2-4610-aba8-0f0024800af5",
+      "name": "Webhook",
+      "webhookId": "9667d819-086a-456f-a82c-754f4bc591c8"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "cc3d6891-cf94-4fb2-97f6-04a0e38a24cb",
+              "leftValue": "={{ $('Webhook').item.json.body.interview_type }}",
+              "rightValue": "online",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -96,
+        -304
+      ],
+      "id": "3146dbb6-183b-4f44-a0f6-db8daac148e5",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body;\n\n// Lấy email ứng viên\nconst candidateEmail = body.candidate_email;\n\n// Lấy danh sách email từ mảng interviewers\nconst interviewerEmails = body.interviewers.map(i => i.email);\n\n// Gộp lại thành 1 mảng duy nhất\nconst allEmails = [candidateEmail, ...interviewerEmails];\n\nreturn {\n  all_emails: allEmails\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -272,
+        -304
+      ],
+      "id": "64a3530f-7bcf-4dd5-8761-2dd28642e8b9",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "content": "## Tạo lịch hẹn gửi tới email",
+        "height": 432,
+        "width": 1104,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -512,
+        -480
+      ],
+      "typeVersion": 1,
+      "id": "fa1c5f69-a02d-49a2-9c3e-c7b95d8c0a18",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://smartcv.phucmeo.id.vn/api/v1/interviews/{{ $('Webhook').item.json.body.interview_id }}/update",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "online_link",
+              "value": "={{ $json.conferenceData.entryPoints[0].uri }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        368,
+        -416
+      ],
+      "id": "995d0cb6-de4a-4133-bbca-abc488807ea5",
+      "name": "HTTP Request",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "XcCAyjRQtcLhjVWG",
+          "name": "SmartCV-Auto"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Create an event",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create an event": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "8273f896-7710-4d5f-8069-d45539aa438a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5a38ffae1cf93921ba3f4162819422b4c69848b6011f05f73be2f0f57ce28553"
+  },
+  "id": "oK7QsVEP5e918jLJ",
+  "tags": []
+}

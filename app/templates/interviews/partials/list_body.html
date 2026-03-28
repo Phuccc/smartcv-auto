@@ -1,0 +1,72 @@
+<div id="interviews-timeline-wrapper">
+    <div class="relative timeline-container pl-12 space-y-2 pt-2" id="interviews-timeline">
+        <!-- Vòng lặp các buổi phỏng vấn -->
+        {% set ns = namespace(current_date=None) %}
+        {% for interview in interviews %}
+            {% set intv_date = interview.scheduled_at.strftime('%Y-%m-%d') %}
+            {% set intv_date_display = interview.scheduled_at.strftime('%d/%m/%Y') %}
+            
+            {% if ns.current_date != intv_date %}
+                {% if not loop.first %}
+                    </div>
+                </div>
+                {% endif %}
+                
+                <div class="relative pt-6 first:pt-2" data-date="{{ intv_date }}">
+                    <div class="absolute -left-[3.25rem] top-7 w-4 h-4 rounded-full border-4 border-warm-bg bg-slate-300 z-10 transition-colors"
+                         x-data="{ isUpcoming: new Date('{{ intv_date }}T00:00:00') >= new Date(new Date().setHours(0,0,0,0)) }"
+                         :class="{'bg-primary border-primary/20': isUpcoming, 'bg-slate-300': !isUpcoming}"></div>
+                    <h3 class="text-sm font-black text-slate-500 uppercase tracking-widest mb-4"
+                        x-data="{ isUpcoming: new Date('{{ intv_date }}T00:00:00') >= new Date(new Date().setHours(0,0,0,0)) }"
+                        :class="{'text-primary': isUpcoming}">{{ intv_date_display }}</h3>
+                    <div class="space-y-4">
+                {% set ns.current_date = intv_date %}
+            {% endif %}
+            
+            {% include "interviews/row.html" %}
+            
+            {% if loop.last %}
+                    </div>
+                </div>
+            {% endif %}
+        {% else %}
+            <div class="bg-card-white p-8 rounded-xl border border-dashed border-slate-300 text-center text-slate-500">
+                Chưa có lịch phỏng vấn nào được lên lịch trong mục này.
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if total_pages > 1 %}
+    <div class="mt-8 pt-4 border-t border-slate-100 flex items-center justify-between">
+        <div class="text-[11px] font-bold text-slate-400">
+            Hiển thị {{ (page - 1) * size + 1 }} - {{ [page * size, total]|min }} / <span class="text-slate-900">{{ total }}</span> lịch hẹn
+        </div>
+        <div class="flex items-center gap-1">
+            {% if page > 1 %}
+            <button type="button" 
+                    hx-get="/ui/interviews?tab={{ tab }}&page={{ page - 1 }}" 
+                    hx-target="#interviews-timeline-wrapper"
+                    hx-swap="outerHTML"
+                    class="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-500 hover:text-primary hover:border-primary/30 hover:bg-primary/5 transition-all outline-none">
+                <span class="material-symbols-outlined text-lg">chevron_left</span>
+            </button>
+            {% endif %}
+            
+            <div class="flex items-center px-2">
+                <span class="text-[13px] font-bold text-slate-900">Trang {{ page }} / {{ total_pages }}</span>
+            </div>
+
+            {% if page < total_pages %}
+            <button type="button" 
+                    hx-get="/ui/interviews?tab={{ tab }}&page={{ page + 1 }}" 
+                    hx-target="#interviews-timeline-wrapper"
+                    hx-swap="outerHTML"
+                    class="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-500 hover:text-primary hover:border-primary/30 hover:bg-primary/5 transition-all outline-none">
+                <span class="material-symbols-outlined text-lg">chevron_right</span>
+            </button>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>

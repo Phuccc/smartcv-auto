@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}Chi tiết: {{ job.title }} | RecruitFlow{% endblock %}
+
+{% block content %}
+<div class="px-12 py-10 w-full max-w-6xl mx-auto">
+    <!-- Breadcrumbs -->
+    <nav class="flex items-center gap-2 text-[10px] font-bold text-slate-400 mb-6 uppercase tracking-wider">
+        <a class="hover:text-primary transition-colors" href="/ui/dashboard">TRANG CHỦ</a>
+        <span class="material-symbols-outlined text-xs">chevron_right</span>
+        <a class="hover:text-primary transition-colors" href="/ui/jobs">TUYỂN DỤNG</a>
+        <span class="material-symbols-outlined text-xs">chevron_right</span>
+        <span class="text-primary">CHI TIẾT</span>
+    </nav>
+    
+    <!-- Title & Actions -->
+    <div class="flex justify-between items-start mb-10">
+        <div class="space-y-1">
+            <div class="flex items-center gap-3">
+                <a href="javascript:void(0)" onclick="smartBack('/ui/jobs')" class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 text-slate-400 hover:text-primary transition-colors bg-white">
+                    <span class="material-symbols-outlined text-xl">arrow_back</span>
+                </a>
+                <h2 class="text-[32px] font-black text-slate-900 tracking-tight leading-tight">{{ job.title }}</h2>
+            </div>
+            <p class="text-slate-500 text-sm font-medium flex items-center gap-2 pl-11">
+                <span class="material-symbols-outlined text-base">location_on</span> {{ job.branch.name if job.branch else "Chưa rõ chi nhánh" }}
+            </p>
+        </div>
+    </div>
+    
+    <!-- Navigation Tabs (HTMX swapping) -->
+    <div class="flex border-b border-slate-200 mb-8" id="job-detail-tabs">
+        <!-- Khi click thì load HTML tab về #tab-content, sau đó đổi class active bằng JS -->
+        <a hx-get="/ui/jobs/{{ job.id }}/tab/info" 
+           hx-target="#tab-content"
+           onclick="setActiveTab(this)"
+           class="px-8 py-4 text-sm font-bold active-tab cursor-pointer text-slate-400 hover:text-slate-600 transition-colors pointer-event">
+           Thông tin chung
+        </a>
+        <a hx-get="/ui/jobs/{{ job.id }}/tab/candidates" 
+           hx-target="#tab-content"
+           onclick="setActiveTab(this)"
+           class="px-8 py-4 text-sm font-bold text-slate-400 hover:text-slate-600 transition-colors cursor-pointer">
+           Danh sách ứng viên
+        </a>
+        <a hx-get="/ui/jobs/{{ job.id }}/tab/interviews" 
+           hx-target="#tab-content"
+           onclick="setActiveTab(this)"
+           class="px-8 py-4 text-sm font-bold text-slate-400 hover:text-slate-600 transition-colors cursor-pointer">
+           Danh sách lịch hẹn
+        </a>
+    </div>
+
+    <!-- Container content HTMX -->
+    <div id="tab-content" hx-get="/ui/jobs/{{ job.id }}/tab/info" hx-trigger="load">
+        <!-- Chờ tải Tab đầu tiên -->
+        <div class="flex justify-center p-12">
+            <span class="material-symbols-outlined animate-spin text-4xl text-primary">autorenew</span>
+        </div>
+    </div>
+</div>
+
+<script>
+    function setActiveTab(element) {
+        document.querySelectorAll('#job-detail-tabs a').forEach(a => {
+            a.classList.remove('active-tab');
+            a.classList.replace('text-primary', 'text-slate-400');
+            // Cần set style thủ công vì lớp class có thể bị css custom lấn át theo yêu cầu Tailwind đặc biệt của người dùng
+        });
+        element.classList.add('active-tab');
+        element.classList.replace('text-slate-400', 'text-primary');
+    }
+    
+    // Đảm bảo tab đầu tiên có css active ngay từ đầu
+    document.addEventListener("DOMContentLoaded", function() {
+        var firstTab = document.querySelector('#job-detail-tabs a');
+        if(firstTab) {
+            firstTab.classList.add('active-tab');
+            firstTab.classList.replace('text-slate-400', 'text-primary');
+        }
+    });
+</script>
+
+<style>
+    .active-tab {
+        border-bottom: 2px solid #a54a0d !important;
+        color: #a54a0d !important;
+    }
+</style>
+{% endblock %}

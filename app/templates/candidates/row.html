@@ -1,0 +1,64 @@
+<tr class="cursor-pointer hover:bg-slate-50 transition-colors {% if loop_index is defined and loop_index % 2 != 0 %}bg-slate-50/30{% endif %}" id="cand-row-{{ candidate.id }}">
+    <td class="px-6 py-4">
+        <div class="flex items-center gap-3">
+            {% set initial = candidate.full_name[:1] | upper %}
+            <div class="w-10 h-10 rounded-full bg-slate-200 border-2 border-white shadow-sm shrink-0 flex items-center justify-center font-bold text-slate-500 text-lg">
+                {{ initial }}
+            </div>
+            <div class="min-w-0">
+                <a href="/ui/candidates/{{ candidate.id }}" hx-target="body" class="text-sm font-bold text-slate-900 hover:text-primary transition-colors leading-none truncate block">{{ candidate.full_name }}</a>
+                <p class="text-[11px] text-slate-500 mt-1 truncate">
+                    {{ candidate.job.title if candidate.job else "Chưa phân bổ" }}
+                    {% if candidate.job and candidate.job.branch %} • {{ candidate.job.branch.name }}{% endif %}
+                </p>
+            </div>
+        </div>
+    </td>
+    <td class="px-4 py-4 hidden md:table-cell">
+        <span class="px-2.5 py-1 bg-slate-100 rounded-md text-[11px] font-bold text-slate-600 uppercase tracking-tight">
+            {{ candidate.job.title if candidate.job else "Không rõ" }}
+        </span>
+    </td>
+    <td class="px-4 py-4">
+        <div class="flex flex-col gap-0.5 mt-0.5">
+            <span class="text-xs font-medium text-slate-600">{{ candidate.phone or "N/A" }}</span>
+        </div>
+    </td>
+    <td class="px-4 py-4">
+        {% set score = candidate.score if candidate.score is not none else 0 %}
+        {% if score >= 8 %}
+            {% set text_color, bg_color, border_color, dot = 'text-green-700', 'bg-green-50', 'border-green-100', 'bg-green-500' %}
+        {% elif score >= 5 %}
+            {% set text_color, bg_color, border_color, dot = 'text-amber-700', 'bg-amber-50', 'border-amber-100', 'bg-amber-500' %}
+        {% else %}
+            {% set text_color, bg_color, border_color, dot = 'text-red-700', 'bg-red-50', 'border-red-100', 'bg-red-500' %}
+        {% endif %}
+        
+        <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded {{ bg_color }} {{ text_color }} text-[10px] font-bold border {{ border_color }}">
+            <span class="w-1.5 h-1.5 rounded-full {{ dot }}"></span>
+            {% if candidate.score is not none %}{{ score|round(1) }}{% else %}N/A{% endif %}/10
+        </div>
+    </td>
+    <td class="px-4 py-4">
+        <p class="text-xs text-slate-500 font-medium">{{ candidate.created_at.strftime('%d/%m/%Y') if candidate.created_at else '' }}</p>
+    </td>
+    <td class="px-4 py-4">
+        {% set status = candidate.status %}
+        {% include "candidates/badge.html" %}
+    </td>
+    <td class="px-6 py-4 text-right">
+        <div class="flex justify-end gap-0.5">
+            {% if request.state.user and request.state.user.role in ['admin', 'hr_staff'] %}
+            <button hx-delete="/ui/candidates/{{ candidate.id }}" hx-confirm="Bạn có chắc muốn xoá ứng viên này không? Thao tác này không thể hoàn tác." hx-target="#cand-row-{{ candidate.id }}" hx-swap="outerHTML" class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors inline-flex items-center justify-center cursor-pointer" title="Xoá">
+                <span class="material-symbols-outlined text-lg">delete</span>
+            </button>
+            <button hx-get="/ui/candidates/form/{{ candidate.id }}" hx-target="#modal-container" hx-swap="innerHTML" class="p-2 text-slate-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-colors" title="Chỉnh sửa">
+                <span class="material-symbols-outlined text-lg">edit</span>
+            </button>
+            {% endif %}
+            <a href="/ui/candidates/{{ candidate.id }}" hx-target="body" class="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors inline-flex items-center justify-center cursor-pointer" title="Xem chi tiết">
+                <span class="material-symbols-outlined text-lg">visibility</span>
+            </a>
+        </div>
+    </td>
+</tr>

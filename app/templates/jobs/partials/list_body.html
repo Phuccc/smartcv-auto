@@ -1,0 +1,59 @@
+<div class="overflow-y-auto" style="height: calc(100vh - 380px);">
+    <table class="w-full text-left border-collapse min-w-[600px]">
+        <thead class="sticky top-0 bg-white z-20 shadow-[0_1px_0_0_rgba(0,0,0,0.05)]">
+            <tr>
+                <th class="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest min-w-[280px]">Tên công việc</th>
+                <th class="px-4 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">Phòng ban</th>
+                <th class="px-4 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">Địa điểm</th>
+                <th class="px-4 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">Trạng thái</th>
+                <th class="px-4 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest text-center">Số ứng viên</th>
+                <th class="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest text-right">Thao tác</th>
+            </tr>
+        </thead>
+        <tbody id="jobs-table-body" class="divide-y divide-slate-100">
+            {% for job in jobs %}
+                {% include "jobs/row.html" %}
+            {% else %}
+            <tr>
+                <td colspan="6" class="px-6 py-12 text-center text-slate-500 font-medium">Không tìm thấy công việc nào phù hợp.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Pagination -->
+{% if total_pages > 1 %}
+<div class="px-6 py-4 border-t border-slate-100 bg-slate-50 flex items-center justify-between">
+    <div class="text-[11px] font-bold text-slate-400">
+        Hiển thị {{ (page - 1) * size + 1 }} - {{ [page * size, total]|min }} / <span class="text-slate-900">{{ total }}</span> công việc
+    </div>
+    <div class="flex items-center gap-1">
+        {% if page > 1 %}
+        <button type="button" 
+                hx-get="/ui/jobs" 
+                hx-include="#jobs-filter-form"
+                hx-vals='{"page": {{ page - 1 }}}'
+                hx-target="#jobs-list-container"
+                class="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-500 hover:text-primary hover:border-primary/30 hover:bg-primary/5 transition-all outline-none">
+            <span class="material-symbols-outlined text-lg">chevron_left</span>
+        </button>
+        {% endif %}
+        
+        <div class="flex items-center px-2">
+            <span class="text-[13px] font-bold text-slate-900">Trang {{ page }} / {{ total_pages }}</span>
+        </div>
+
+        {% if page < total_pages %}
+        <button type="button" 
+                hx-get="/ui/jobs" 
+                hx-include="#jobs-filter-form"
+                hx-vals='{"page": {{ page + 1 }}}'
+                hx-target="#jobs-list-container"
+                class="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-500 hover:text-primary hover:border-primary/30 hover:bg-primary/5 transition-all outline-none">
+            <span class="material-symbols-outlined text-lg">chevron_right</span>
+        </button>
+        {% endif %}
+    </div>
+</div>
+{% endif %}

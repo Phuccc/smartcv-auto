@@ -1,0 +1,440 @@
+{% extends "base.html" %}
+
+{% block title %}Hồ sơ ứng viên - {{ candidate.full_name }} | RecruitFlow{% endblock %}
+
+{% block content %}
+<div class="px-12 py-10 w-full max-w-6xl mx-auto">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+        <div>
+            <nav class="flex items-center gap-2 text-[10px] font-bold text-slate-400 mb-6 uppercase tracking-wider">
+                <a class="hover:text-primary transition-colors" href="/ui/candidates">ỨNG VIÊN</a>
+                <span class="material-symbols-outlined text-xs">chevron_right</span>
+                <span class="text-primary">HỒ SƠ CHI TIẾT</span>
+            </nav>
+            <div class="flex items-center gap-4">
+                <a href="javascript:void(0)" onclick="smartBack('/ui/candidates')" class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 text-slate-400 hover:text-primary transition-colors bg-white">
+                    <span class="material-symbols-outlined text-xl">arrow_back</span>
+                </a>
+                <h2 class="text-2xl lg:text-3xl font-black text-slate-900 tracking-tight">{{ candidate.full_name }}</h2>
+                {% set status = candidate.status %}
+                {% include "candidates/badge.html" %}
+            </div>
+            {% if candidate.job %}
+            <p class="text-sm text-slate-500 font-medium mt-1">Ứng tuyển vị trí: <span class="text-slate-700 font-bold">{{ candidate.job.title }}</span> {% if candidate.job.branch %}<span class="text-slate-400 mx-2">|</span> Chi nhánh: <span class="text-slate-700 font-bold">{{ candidate.job.branch.name }}</span>{% endif %}</p>
+            {% endif %}
+        </div>
+    <div class="flex items-center gap-3">
+        <button hx-get="/ui/candidates/form/{{ candidate.id }}" hx-target="#modal-container" hx-swap="innerHTML" 
+            hx-on::after-request="if(event.detail.successful) { 
+                const modal = document.querySelector('#modal-container form');
+                if(modal) {
+                    modal.setAttribute('hx-target', 'body');
+                    modal.setAttribute('hx-swap', 'none');
+                    modal.addEventListener('htmx:afterRequest', (e) => {
+                        if(e.detail.successful) window.location.reload();
+                    });
+                    htmx.process(modal);
+                }
+            }"
+            class="flex items-center gap-2 px-5 py-2.5 rounded-lg border border-slate-200 bg-white text-slate-700 font-bold hover:bg-slate-50 transition-all text-sm">
+            <span class="material-symbols-outlined text-xl">edit</span>
+            Chỉnh sửa
+        </button>
+        
+        {% if candidate.status == 'mới' %}
+        <button 
+            hx-put="/ui/candidates/{{ candidate.id }}/status" 
+            hx-vals='{"status": "duyệt"}'
+            class="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary text-white font-bold hover:shadow-lg hover:shadow-primary/25 transition-all active:scale-95 text-sm">
+            <span class="material-symbols-outlined text-xl">check_circle</span>
+            Duyệt hồ sơ
+        </button>
+        <button 
+            hx-get="/ui/candidates/{{ candidate.id }}/reject-form" hx-target="#modal-container" hx-swap="innerHTML"
+            class="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-slate-100 text-slate-600 font-bold hover:bg-red-50 hover:text-red-600 transition-all active:scale-95 text-sm">
+            <span class="material-symbols-outlined text-xl">cancel</span>
+            Từ chối
+        </button>
+
+        {% elif candidate.status == 'duyệt' %}
+        <button hx-get="/ui/interviews/form?candidate_id={{ candidate.id }}" hx-target="#modal-container" hx-swap="innerHTML"
+            class="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary text-white font-bold hover:shadow-lg hover:shadow-primary/25 transition-all text-sm">
+            <span class="material-symbols-outlined text-xl">schedule</span>
+            Tạo lịch hẹn
+        </button>
+        <button 
+            hx-get="/ui/candidates/{{ candidate.id }}/reject-form" hx-target="#modal-container" hx-swap="innerHTML"
+            class="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-slate-100 text-slate-600 font-bold hover:bg-orange-50 hover:text-orange-600 transition-all active:scale-95 text-sm">
+            <span class="material-symbols-outlined text-xl">cancel</span>
+            Ứng viên từ chối
+        </button>
+
+        {% elif candidate.status == 'phỏng vấn' %}
+        <button hx-get="/ui/interviews/form?candidate_id={{ candidate.id }}" hx-target="#modal-container" hx-swap="innerHTML"
+            class="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary text-white font-bold hover:shadow-lg hover:shadow-primary/25 transition-all text-sm">
+            <span class="material-symbols-outlined text-xl">schedule</span>
+            Tạo lịch hẹn
+        </button>
+        <button hx-get="/ui/candidates/{{ candidate.id }}/offer-form" hx-target="#modal-container" hx-swap="innerHTML"
+            class="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-green-600 text-white font-bold hover:shadow-lg hover:shadow-green-600/25 transition-all text-sm">
+            <span class="material-symbols-outlined text-xl">send</span>
+            Gửi Offer
+        </button>
+        <button 
+            hx-get="/ui/candidates/{{ candidate.id }}/reject-form" hx-target="#modal-container" hx-swap="innerHTML"
+            class="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-slate-100 text-slate-600 font-bold hover:bg-orange-50 hover:text-orange-600 transition-all active:scale-95 text-sm">
+            <span class="material-symbols-outlined text-xl">cancel</span>
+            Ứng viên từ chối
+        </button>
+
+        {% elif candidate.status == 'gửi offer' %}
+        <button 
+            hx-put="/ui/candidates/{{ candidate.id }}/status" 
+            hx-vals='{"status": "đã tuyển"}'
+            hx-confirm="Xác nhận ứng viên đã đồng ý nhận việc và chuyển trạng thái thành 'Đã nhận việc'?"
+            class="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary text-white font-bold hover:shadow-lg hover:shadow-primary/25 transition-all active:scale-95 text-sm">
+            <span class="material-symbols-outlined text-xl">handshake</span>
+            Nhận việc
+        </button>
+        <button 
+            hx-get="/ui/candidates/{{ candidate.id }}/reject-form" hx-target="#modal-container" hx-swap="innerHTML"
+            class="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-slate-100 text-slate-600 font-bold hover:bg-orange-50 hover:text-orange-600 transition-all active:scale-95 text-sm">
+            <span class="material-symbols-outlined text-xl">cancel</span>
+            Ứng viên từ chối
+        </button>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Tab System wrapper -->
+<div x-data="{ activeTab: 'info' }" class="space-y-8">
+    <!-- Tab Headers -->
+    <div class="flex items-center gap-8 border-b border-slate-100 mb-2">
+        <button @click="activeTab = 'info'" 
+            :class="activeTab === 'info' ? 'text-primary border-primary' : 'text-slate-400 border-transparent hover:text-slate-600'"
+            class="pb-4 border-b-2 font-black text-xs uppercase tracking-widest transition-all flex items-center gap-2">
+            <span class="material-symbols-outlined text-sm">person_search</span>
+            Thông tin chung
+        </button>
+        <button @click="activeTab = 'notes'" 
+            :class="activeTab === 'notes' ? 'text-primary border-primary' : 'text-slate-400 border-transparent hover:text-slate-600'"
+            class="pb-4 border-b-2 font-black text-xs uppercase tracking-widest transition-all flex items-center gap-2"
+            x-data="{ count: {{ candidate.notes | length }} }"
+            x-on:new-note-added.window="count++"
+            x-on:note-deleted.window="count--">
+            <span class="material-symbols-outlined text-sm">description</span>
+            Ghi chú
+            <span x-show="count > 0" 
+                  x-text="count"
+                  class="px-1.5 py-0.5 rounded-full text-[9px] font-black transition-colors" 
+                  :class="activeTab === 'notes' ? 'bg-primary/10 text-primary' : 'bg-slate-100 text-slate-400'">
+            </span>
+        </button>
+    </div>
+
+    <!-- Tab Content: General Info (The original 2-column grid) -->
+    <div x-show="activeTab === 'info'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
+        <div class="grid grid-cols-12 gap-8">
+            <div class="col-span-12 lg:col-span-7 xl:col-span-8 space-y-8">
+                {% if candidate.ai_summary %}
+                <section class="bg-white rounded-2xl border border-slate-200 shadow-sm p-8">
+                    <div class="flex items-center justify-between mb-6">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-lg bg-primary/5 flex items-center justify-center text-primary">
+                                <span class="material-symbols-outlined text-2xl font-variation-settings-FILL">psychology</span>
+                            </div>
+                            <h3 class="text-lg font-black text-slate-900 tracking-tight">Phân tích chuyên sâu từ AI</h3>
+                        </div>
+                        {% if candidate.score %}
+                        <div class="flex items-center gap-2 px-4 py-1.5 bg-green-50 text-green-700 border border-green-200 rounded-full">
+                            <span class="text-[11px] font-black uppercase tracking-wider">Độ phù hợp</span>
+                            <span class="text-base font-black">{{ candidate.score }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="grid grid-cols-1 gap-6">
+                        <div class="bg-slate-50 p-5 rounded-xl border border-slate-100">
+                            <h4 class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-3">Tóm tắt nhận định</h4>
+                            <p class="text-sm text-slate-600 leading-relaxed italic">
+                                "{{ candidate.ai_summary }}"
+                            </p>
+                        </div>
+                    </div>
+                </section>
+                {% endif %}
+
+                {% if candidate.experience and candidate.experience|length > 0 %}
+                <section class="bg-white rounded-2xl border border-slate-200 shadow-sm p-8">
+                    <div class="flex items-center gap-3 mb-8">
+                        <div class="w-10 h-10 rounded-lg bg-primary/5 flex items-center justify-center text-primary">
+                            <span class="material-symbols-outlined text-2xl font-variation-settings-FILL">history_edu</span>
+                        </div>
+                        <h3 class="text-lg font-black text-slate-900 tracking-tight">Kinh nghiệm làm việc</h3>
+                    </div>
+                    
+                    <div class="relative pl-8 border-l-2 border-slate-100 space-y-10">
+                        {% for expr in candidate.experience %}
+                        <div class="relative">
+                            {% if loop.first %}
+                            <div class="absolute -left-[41px] top-1 w-5 h-5 rounded-full bg-primary ring-4 ring-white shadow-sm flex items-center justify-center">
+                                <div class="w-2 h-2 rounded-full bg-white"></div>
+                            </div>
+                            {% else %}
+                            <div class="absolute -left-[41px] top-1 w-5 h-5 rounded-full bg-slate-200 ring-4 ring-white shadow-sm"></div>
+                            {% endif %}
+                            
+                            <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-2">
+                                <h5 class="text-base font-bold text-slate-900">{{ expr.position }}</h5>
+                                <span class="text-xs font-bold {% if loop.first %}text-primary bg-primary/5 border-primary/10{% else %}text-slate-400 bg-slate-50 border-slate-100{% endif %} px-3 py-1 rounded-full border">
+                                    {{ expr.start_date.strftime('%m/%Y') if expr.start_date else 'N/A' }} - {{ expr.end_date.strftime('%m/%Y') if expr.end_date else 'Hiện tại' }}
+                                </span>
+                            </div>
+                            <p class="text-sm font-bold text-slate-600 mb-3">{{ expr.company_name }}</p>
+                            {% if expr.description %}
+                            <div class="text-sm text-slate-500 leading-relaxed">
+                                {{ expr.description | replace('\n', '<br>') | safe }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </section>
+                {% endif %}
+
+                <div class="grid md:grid-cols-2 gap-8">
+                    {% if candidate.education and candidate.education|length > 0 %}
+                    <section class="bg-white rounded-2xl border border-slate-200 shadow-sm p-8">
+                        <div class="flex items-center gap-3 mb-6">
+                            <div class="w-10 h-10 rounded-lg bg-primary/5 flex items-center justify-center text-primary">
+                                <span class="material-symbols-outlined text-2xl font-variation-settings-FILL">school</span>
+                            </div>
+                            <h3 class="text-lg font-black text-slate-900 tracking-tight">Học vấn</h3>
+                        </div>
+                        <div class="space-y-4">
+                            {% for edu in candidate.education %}
+                            <div class="{% if not loop.first %}pt-4 border-t border-slate-100{% endif %}">
+                                <p class="text-sm font-bold text-slate-900">{{ edu.institution }}</p>
+                                <p class="text-xs font-medium text-slate-600">{{ edu.degree }} {{ '- ' + edu.major if edu.major else '' }}</p>
+                                <p class="text-xs text-slate-400 mt-0.5">{{ edu.start_year or '' }} {{ '- ' ~ edu.end_year if edu.end_year else '' }}</p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </section>
+                    {% endif %}
+
+                    {% if candidate.skills and candidate.skills|length > 0 %}
+                    <section class="bg-white rounded-2xl border border-slate-200 shadow-sm p-8">
+                        <div class="flex items-center gap-3 mb-6">
+                            <div class="w-10 h-10 rounded-lg bg-primary/5 flex items-center justify-center text-primary">
+                                <span class="material-symbols-outlined text-2xl font-variation-settings-FILL">bolt</span>
+                            </div>
+                            <h3 class="text-lg font-black text-slate-900 tracking-tight">Kỹ năng</h3>
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            {% for cs in candidate.skills %}
+                            <span class="px-3 py-1.5 bg-slate-50 border border-slate-200 text-slate-700 text-[11px] font-bold rounded-lg">{{ cs.skill.name }}</span>
+                            {% endfor %}
+                        </div>
+                    </section>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="col-span-12 lg:col-span-5 xl:col-span-4 space-y-8">
+                <section class="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 overflow-hidden relative">
+                    <div class="space-y-4">
+                        <h4 class="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-4">Thông tin cá nhân</h4>
+                        
+                        <div class="flex items-center gap-4 p-3 rounded-xl hover:bg-slate-50 transition-colors group">
+                            <div class="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 group-hover:text-primary group-hover:bg-primary/10 transition-colors">
+                                <span class="material-symbols-outlined text-xl">person</span>
+                            </div>
+                            <div class="min-w-0">
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Giới tính</p>
+                                <p class="text-sm font-semibold text-slate-700">
+                                    {% if candidate.gender == 'male' %}Nam
+                                    {% elif candidate.gender == 'female' %}Nữ
+                                    {% elif candidate.gender == 'other' %}Khác
+                                    {% else %}Chưa xác định{% endif %}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-4 p-3 rounded-xl hover:bg-slate-50 transition-colors group">
+                            <div class="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 group-hover:text-primary group-hover:bg-primary/10 transition-colors">
+                                <span class="material-symbols-outlined text-xl">calendar_today</span>
+                            </div>
+                            <div class="min-w-0">
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Ngày sinh</p>
+                                <p class="text-sm font-semibold text-slate-700">
+                                    {{ candidate.date_of_birth.strftime('%d/%m/%Y') if candidate.date_of_birth else 'Chưa cập nhật' }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4 pt-6 border-t border-slate-100">
+                        <h4 class="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-4">Thông tin liên hệ</h4>
+                        
+                        {% if candidate.email %}
+                        <div class="flex items-center gap-4 p-3 rounded-xl hover:bg-slate-50 transition-colors group">
+                            <div class="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 group-hover:text-primary group-hover:bg-primary/10 transition-colors">
+                                <span class="material-symbols-outlined text-xl">mail</span>
+                            </div>
+                            <div class="min-w-0">
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Email</p>
+                                <p class="text-sm font-semibold text-slate-700 truncate"><a href="mailto:{{ candidate.email }}">{{ candidate.email }}</a></p>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if candidate.phone %}
+                        <div class="flex items-center gap-4 p-3 rounded-xl hover:bg-slate-50 transition-colors group">
+                            <div class="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 group-hover:text-primary group-hover:bg-primary/10 transition-colors">
+                                <span class="material-symbols-outlined text-xl">call</span>
+                            </div>
+                            <div class="min-w-0">
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Số điện thoại</p>
+                                <p class="text-sm font-semibold text-slate-700"><a href="tel:{{ candidate.phone }}">{{ candidate.phone }}</a></p>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if candidate.specific_address %}
+                        <div class="flex items-center gap-4 p-3 rounded-xl hover:bg-slate-50 transition-colors group">
+                            <div class="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 group-hover:text-primary group-hover:bg-primary/10 transition-colors">
+                                <span class="material-symbols-outlined text-xl">location_on</span>
+                            </div>
+                            <div class="min-w-0">
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Địa chỉ</p>
+                                <p class="text-sm font-semibold text-slate-700">{{ candidate.specific_address }}</p>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if candidate.facebook or candidate.zalo or candidate.links %}
+                        <div class="flex items-center gap-4 p-3 rounded-xl hover:bg-slate-50 transition-colors group">
+                            <div class="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 group-hover:text-primary group-hover:bg-primary/10 transition-colors">
+                                <span class="material-symbols-outlined text-xl">language</span>
+                            </div>
+                            <div class="min-w-0">
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter mb-1.5">Mạng xã hội & Khác</p>
+                                <div class="flex flex-wrap gap-1.5">
+                                    {% if candidate.facebook %}
+                                    <a class="p-1 rounded bg-slate-50 hover:bg-primary/10 text-slate-500 hover:text-primary transition-colors flex items-center" href="{{ candidate.facebook }}" target="_blank" title="Facebook">
+                                        <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M22.675 0h-21.35c-.732 0-1.325.593-1.325 1.325v21.351c0 .731.593 1.324 1.325 1.324h11.495v-9.294h-3.128v-3.622h3.128v-2.671c0-3.1 1.893-4.788 4.659-4.788 1.325 0 2.463.099 2.795.143v3.24l-1.918.001c-1.504 0-1.795.715-1.795 1.763v2.313h3.587l-.467 3.622h-3.12v9.293h6.116c.73 0 1.323-.593 1.323-1.325v-21.35c0-.732-.593-1.325-1.325-1.325z"></path></svg>
+                                    </a>
+                                    {% endif %}
+                                    {% for link in candidate.links %}
+                                    <a class="p-1 rounded bg-slate-50 hover:bg-primary/10 text-slate-500 hover:text-primary transition-colors flex items-center" href="{{ link.url }}" target="_blank" title="{{ link.label }}">
+                                        <span class="material-symbols-outlined text-[16px]">link</span>
+                                    </a>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </section>
+
+                {% if candidate.cv_link or candidate.portfolio_link %}
+                <section class="bg-white rounded-2xl border border-slate-200 shadow-sm p-8">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-lg font-black text-slate-900 tracking-tight">Tài liệu đính kèm</h3>
+                    </div>
+                    <div class="space-y-4">
+                        {% if candidate.cv_link %}
+                        <div class="flex items-center justify-between p-4 border border-slate-100 rounded-xl bg-slate-50/50 hover:bg-slate-50 transition-colors">
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 rounded bg-red-50 flex items-center justify-center text-red-500">
+                                    <span class="material-symbols-outlined font-variation-settings-FILL">picture_as_pdf</span>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-bold text-slate-900">CV_{{ candidate.full_name | replace(" ", "_") }}</p>
+                                    <p class="text-[10px] text-slate-500 uppercase">Hồ sơ ứng viên</p>
+                                </div>
+                            </div>
+                            <div class="flex gap-2">
+                                <a href="{{ candidate.cv_link }}" target="_blank" class="w-8 h-8 rounded-lg flex items-center justify-center bg-white border border-slate-200 text-slate-400 hover:text-primary transition-colors">
+                                    <span class="material-symbols-outlined text-lg">open_in_new</span>
+                                </a>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        {% if candidate.portfolio_link %}
+                        <div class="flex items-center justify-between p-4 border border-slate-100 rounded-xl bg-slate-50/50 hover:bg-slate-50 transition-colors">
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 rounded bg-blue-50 flex items-center justify-center text-blue-500">
+                                    <span class="material-symbols-outlined font-variation-settings-FILL">link</span>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-bold text-slate-900">Portfolio</p>
+                                    <p class="text-[10px] text-slate-500 uppercase">Liên kết ngoài</p>
+                                </div>
+                            </div>
+                            <div class="flex gap-2">
+                                <a href="{{ candidate.portfolio_link }}" target="_blank" class="w-8 h-8 rounded-lg flex items-center justify-center bg-white border border-slate-200 text-slate-400 hover:text-primary transition-colors">
+                                    <span class="material-symbols-outlined text-lg">open_in_new</span>
+                                </a>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mt-8 pt-6 border-t border-slate-100">
+                        <div class="flex items-center justify-between text-[11px] text-slate-400 font-bold uppercase tracking-wider">
+                            <span>Nguồn: Hệ thống</span>
+                            <div class="flex gap-4">
+                                <button class="hover:text-primary flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">print</span> In</button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab Content: Notes -->
+    <div x-show="activeTab === 'notes'" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" class="space-y-6">
+        <section class="bg-white rounded-2xl border border-slate-200 shadow-sm p-8">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-10 h-10 rounded-lg bg-primary/5 flex items-center justify-center text-primary">
+                    <span class="material-symbols-outlined text-2xl font-variation-settings-FILL">history_edu</span>
+                </div>
+                <div>
+                    <h3 class="text-lg font-black text-slate-900 tracking-tight">Ghi chú & Nhận xét</h3>
+                    <p class="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Lưu lại các đánh giá trong quá trình tuyển dụng</p>
+                </div>
+            </div>
+
+            <!-- Add Note Form -->
+            <form hx-post="/ui/candidates/{{ candidate.id }}/notes" 
+                  hx-target="#notes-list-container" 
+                  hx-swap="innerHTML"
+                  class="mb-8"
+                  id="note-form"
+                  hx-on::after-request="if(event.detail.successful) { this.reset(); htmx.trigger('body', 'newNoteAdded'); }">
+                <div class="relative group">
+                    <textarea name="content" 
+                              rows="3" 
+                              class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm text-slate-700 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-slate-400"
+                              placeholder="Nhập nội dung ghi chú mới..."></textarea>
+                    <button type="submit" 
+                            class="absolute bottom-3 right-3 p-2 bg-primary text-white rounded-xl shadow-lg shadow-primary/20 hover:scale-105 transition-all active:scale-95 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-xl">send</span>
+                    </button>
+                </div>
+            </form>
+
+            <!-- Notes List -->
+            <div id="notes-list-container">
+                {% set notes = candidate.notes %}
+                {% include "candidates/partials/note_list.html" with context %}
+            </div>
+        </section>
+    </div>
+</div>
+</div>
+{% endblock %}

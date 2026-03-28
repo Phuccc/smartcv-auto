@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+
+{% block title %}Lịch phỏng vấn - Dòng thời gian | SmartCV Auto{% endblock %}
+
+{% block extra_head %}
+    <style>
+        .timeline-container::before {
+            content: '';
+            position: absolute;
+            left: 1.5rem; /* 24px */
+            top: 0;
+            bottom: 0;
+            width: 1px;
+            background-color: #e2e8f0; /* slate-200 */
+            margin-left: 2px;
+        }
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+        }
+    </style>
+    <script>
+        function calendarComponent(interviewDates) {
+            return {
+                currentDate: new Date(),
+                days: [],
+                month: 0,
+                year: 0,
+                interviewDates: interviewDates,
+                
+                init() {
+                    this.month = this.currentDate.getMonth();
+                    this.year = this.currentDate.getFullYear();
+                    this.generateCalendar();
+                },
+                
+                generateCalendar() {
+                    const firstDay = new Date(this.year, this.month, 1).getDay();
+                    let startOffset = firstDay === 0 ? 6 : firstDay - 1;
+                    
+                    const daysInMonth = new Date(this.year, this.month + 1, 0).getDate();
+                    const prevMonthDays = new Date(this.year, this.month, 0).getDate();
+                    
+                    this.days = [];
+                    
+                    for (let i = startOffset - 1; i >= 0; i--) {
+                        this.days.push({
+                            day: prevMonthDays - i,
+                            currentMonth: false,
+                            dateStr: ''
+                        });
+                    }
+                    
+                    for (let i = 1; i <= daysInMonth; i++) {
+                        const d = new Date(this.year, this.month, i);
+                        const dateStr = `${this.year}-${String(this.month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+                        this.days.push({
+                            day: i,
+                            currentMonth: true,
+                            dateStr: dateStr,
+                            hasInterview: this.interviewDates.includes(dateStr),
+                            isToday: new Date().toDateString() === d.toDateString()
+                        });
+                    }
+                    
+                    const remaining = 42 - this.days.length;
+                    for (let i = 1; i <= remaining; i++) {
+                        this.days.push({
+                            day: i,
+                            currentMonth: false,
+                            dateStr: ''
+                        });
+                    }
+                },
+                
+                prevMonth() {
+                    if (this.month === 0) {
+                        this.month = 11;
+                        this.year--;
+                    } else {
+                        this.month--;
+                    }
+                    this.generateCalendar();
+                },
+                
+                nextMonth() {
+                    if (this.month === 11) {
+                        this.month = 0;
+                        this.year++;
+                    } else {
+                        this.month++;
+                    }
+                    this.generateCalendar();
+                },
+                
+                getMonthName() {
+                    return new Intl.DateTimeFormat('vi-VN', { month: 'long', year: 'numeric' }).format(new Date(this.year, this.month));
+                }
+            };
+        }
+    </script>
+{% endblock %}
+
+{% block content %}
+<div class="px-6 py-6 lg:px-10 shrink-0">
+    <div class="max-w-7xl mx-auto flex flex-col lg:flex-row gap-8">
+        
+        <!-- Main Timeline Area -->
+        <div class="flex-1">
+            <div class="mb-6">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <nav class="flex items-center gap-2 text-[11px] font-bold text-slate-400 mb-2 uppercase tracking-widest">
+                            <a class="hover:text-primary transition-colors" href="/ui/dashboard">Trang chủ</a>
+                            <span class="material-symbols-outlined text-xs">chevron_right</span>
+                            <span class="text-primary">Phỏng vấn</span>
+                        </nav>
+                        <h2 class="text-3xl font-black text-slate-900 tracking-tight">Lịch trình Phỏng vấn</h2>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <form id="interviews-filter-form" class="hidden">
+                            <input type="hidden" name="tab" value="{{ tab }}">
+                            <input type="hidden" name="page" value="1">
+                        </form>
+
+                        <div class="flex bg-white rounded-lg p-1 border border-slate-200 text-xs font-bold shadow-sm">
+                            <a href="/ui/interviews?tab=upcoming" class="px-4 py-2 rounded-md {% if tab == 'upcoming' or tab == '' %}bg-primary text-white shadow-sm{% else %}text-slate-500 hover:text-slate-900 transition-colors{% endif %}">Sắp tới</a>
+                            <a href="/ui/interviews?tab=past" class="px-4 py-2 rounded-md {% if tab == 'past' %}bg-primary text-white shadow-sm{% else %}text-slate-500 hover:text-slate-900 transition-colors{% endif %}">Đã hoàn thành</a>
+                            <a href="/ui/interviews?tab=cancelled" class="px-4 py-2 rounded-md {% if tab == 'cancelled' %}bg-primary text-white shadow-sm{% else %}text-slate-500 hover:text-slate-900 transition-colors{% endif %}">Đã hủy</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {% include "interviews/partials/list_body.html" %}
+        </div>
+        
+        <!-- Right Sidebar (Calendar & Summary) -->
+        <div class="w-full lg:w-80 space-y-6 shrink-0 lg:sticky lg:top-6 lg:self-start">
+            <!-- Thêm Button mới -->
+            {% if request.state.user and request.state.user.role in ['admin', 'hr_staff'] %}
+            <button hx-get="/ui/interviews/form" hx-target="#modal-container" hx-swap="innerHTML" class="w-full py-4 bg-primary text-white font-bold rounded-xl shadow-[0_8px_16px_-4px_rgba(165,74,13,0.3)] hover:shadow-[0_12px_20px_-4px_rgba(165,74,13,0.4)] transition-all flex items-center justify-center gap-2 active:scale-[0.98]">
+                <span class="material-symbols-outlined">add_circle</span>
+                Lên lịch phỏng vấn mới
+            </button>
+            {% endif %}
+            
+            <div class="bg-card-white p-5 rounded-xl border border-slate-200 shadow-sm" x-cloak
+                 x-data='calendarComponent({{ all_dates | map('strftime', '%Y-%m-%d') | list | tojson }})'>
+                
+                <div class="flex items-center justify-between mb-6">
+                    <h4 class="text-xs font-black text-slate-900 uppercase tracking-tighter" x-text="getMonthName()">---</h4>
+                    <div class="flex gap-1">
+                        <button @click="prevMonth()" class="p-1 hover:bg-slate-50 rounded text-slate-400 transition-colors">
+                            <span class="material-symbols-outlined text-lg">chevron_left</span>
+                        </button>
+                        <button @click="nextMonth()" class="p-1 hover:bg-slate-50 rounded text-slate-400 transition-colors">
+                            <span class="material-symbols-outlined text-lg">chevron_right</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="calendar-grid text-center mb-2">
+                    <template x-for="dayName in ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN']">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase" x-text="dayName"></span>
+                    </template>
+                </div>
+
+                <div class="calendar-grid text-center gap-y-1">
+                    <template x-for="dayObj in days">
+                        <div class="relative py-2 flex items-center justify-center">
+                            <span class="text-xs font-medium w-8 h-8 flex items-center justify-center rounded-lg transition-all"
+                                  :class="{
+                                      'text-slate-900': dayObj.currentMonth,
+                                      'text-slate-300': !dayObj.currentMonth,
+                                      'bg-primary text-white font-bold shadow-sm': dayObj.isToday,
+                                      'hover:bg-slate-100 cursor-pointer': dayObj.currentMonth && !dayObj.isToday,
+                                      'ring-1 ring-primary/30': dayObj.hasInterview && !dayObj.isToday
+                                  }"
+                                  x-text="dayObj.day"
+                                  @click="if(dayObj.hasInterview) { 
+                                      const el = document.querySelector('[data-date=\'' + dayObj.dateStr + '\']');
+                                      if(el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                  }">
+                            </span>
+                            <template x-if="dayObj.hasInterview">
+                                <span class="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-primary rounded-full"></span>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+
+                <div class="mt-4 pt-4 border-t border-slate-100">
+                    <div class="flex items-center gap-2 text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+                        <span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+                        Có lịch hẹn
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+</div>
+
+{% endblock %}

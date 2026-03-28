@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}Quản lý Danh mục - SmartCV Auto{% endblock %}
+
+{% block content %}
+<div class="p-4 md:p-8">
+    <div class="mb-8">
+        <h1 class="text-2xl font-black text-slate-900 uppercase tracking-tight flex items-center gap-3">
+            <span class="material-symbols-outlined text-primary text-3xl">category</span>
+            Quản lý Danh mục
+        </h1>
+        <p class="text-slate-500 text-sm mt-1">Cấu hình các thông tin cơ sở như Chi nhánh, Phòng ban và Kỹ năng chuyên môn.</p>
+    </div>
+
+    <!-- Tabs Navigation -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden mb-6">
+        <div class="flex border-b border-slate-100 bg-slate-50/50">
+            <button hx-get="/ui/categories/branches" 
+                    hx-target="#category-content" 
+                    hx-push-url="?tab=branches"
+                    class="flex-1 py-4 px-6 text-sm font-bold transition-all flex items-center justify-center gap-2 border-b-2 {% if category_type == 'branches' %}border-primary text-primary bg-white shadow-sm{% else %}border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100/50{% endif %}"
+                    @click="activeTab = 'branches'">
+                <span class="material-symbols-outlined text-[20px]">location_on</span>
+                Chi nhánh
+            </button>
+            <button hx-get="/ui/categories/departments" 
+                    hx-target="#category-content" 
+                    hx-push-url="?tab=departments"
+                    class="flex-1 py-4 px-6 text-sm font-bold transition-all flex items-center justify-center gap-2 border-b-2 {% if category_type == 'departments' %}border-primary text-primary bg-white shadow-sm{% else %}border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100/50{% endif %}"
+                    @click="activeTab = 'departments'">
+                <span class="material-symbols-outlined text-[20px]">business</span>
+                Phòng ban
+            </button>
+            <button hx-get="/ui/categories/skills" 
+                    hx-target="#category-content" 
+                    hx-push-url="?tab=skills"
+                    class="flex-1 py-4 px-6 text-sm font-bold transition-all flex items-center justify-center gap-2 border-b-2 {% if category_type == 'skills' %}border-primary text-primary bg-white shadow-sm{% else %}border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100/50{% endif %}"
+                    @click="activeTab = 'skills'">
+                <span class="material-symbols-outlined text-[20px]">verified</span>
+                Kỹ năng
+            </button>
+        </div>
+
+        <!-- Content Area -->
+        <div id="category-content" class="min-h-[400px]">
+            {% filter indent(12) %}
+                {% include "settings/partials/category_list.html" %}
+            {% endfilter %}
+        </div>
+    </div>
+</div>
+
+<script>
+    document.body.addEventListener('htmx:beforeOnLoad', function (evt) {
+        if (evt.detail.target.id === 'category-content') {
+            // Cập nhật trạng thái active cho các tab button tay
+            const buttons = document.querySelectorAll('[hx-target="#category-content"]');
+            buttons.forEach(btn => {
+                btn.classList.remove('border-primary', 'text-primary', 'bg-white', 'shadow-sm');
+                btn.classList.add('border-transparent', 'text-slate-500');
+            });
+            evt.detail.elt.classList.add('border-primary', 'text-primary', 'bg-white', 'shadow-sm');
+            evt.detail.elt.classList.remove('border-transparent', 'text-slate-500');
+        }
+    });
+</script>
+
+<style>
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #e2e8f0;
+        border-radius: 10px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: #cbd5e1;
+    }
+</style>
+{% endblock %}

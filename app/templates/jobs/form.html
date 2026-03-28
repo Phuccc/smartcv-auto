@@ -1,0 +1,236 @@
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm transition-opacity" id="job-modal-backdrop">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden transform transition-all" @click.stop="">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50">
+            <h3 class="text-lg font-bold text-slate-900">
+                {% if job %}Chỉnh sửa công việc: {{ job.title }}{% else %}Tạo công việc mới{% endif %}
+            </h3>
+            <button onclick="document.getElementById('modal-container').innerHTML=''" class="text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-lg hover:bg-slate-200">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        
+        {% if job %}
+        <form hx-post="/ui/jobs/{{ job.id }}/update" 
+              hx-target="{% if context == 'detail' %}this{% else %}#job-row-{{ job.id }}{% endif %}" 
+              hx-swap="{% if context == 'detail' %}none{% else %}outerHTML{% endif %}"
+              hx-on::after-request="if(event.detail.successful) document.getElementById('modal-container').innerHTML=''"
+              class="p-6">
+        {% else %}
+        <form hx-post="/ui/jobs" 
+              hx-target="#jobs-table-body" 
+              hx-swap="afterbegin"
+              hx-on::after-request="if(event.detail.successful) document.getElementById('modal-container').innerHTML=''"
+              class="p-6">
+        {% endif %}
+            {% if context %}
+            <input type="hidden" name="context" value="{{ context }}">
+            {% endif %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5 overflow-y-auto max-h-[70vh] pr-2 pb-2">
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-widest mb-2">Tên công việc <span class="text-red-500">*</span></label>
+                    <input type="text" name="title" value="{{ job.title if job else '' }}" required class="w-full px-4 py-2.5 rounded-lg border-slate-200 focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm font-medium">
+                </div>
+                
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-widest mb-2">Phòng ban</label>
+                    <select name="department_id" class="w-full px-4 py-2.5 rounded-lg border-slate-200 focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm font-medium">
+                        <option value="">-- Chọn phòng ban --</option>
+                        {% for dept in departments %}
+                            <option value="{{ dept.id }}" {% if job and job.department_id == dept.id %}selected{% endif %}>{{ dept.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-widest mb-2">Chi nhánh</label>
+                    <select name="branch_id" class="w-full px-4 py-2.5 rounded-lg border-slate-200 focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm font-medium">
+                        <option value="">-- Chọn chi nhánh --</option>
+                        {% for branch in branches %}
+                            <option value="{{ branch.id }}" {% if job and job.branch_id == branch.id %}selected{% endif %}>{{ branch.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-widest mb-2">Trạng thái</label>
+                    <select name="status" class="w-full px-4 py-2.5 rounded-lg border-slate-200 focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm font-medium">
+                        <option value="open" {% if job and job.status == 'open' %}selected{% endif %}>Đang tuyển</option>
+                        <option value="closed" {% if job and job.status == 'closed' %}selected{% endif %}>Đã đóng</option>
+                        <option value="paused" {% if job and job.status == 'paused' %}selected{% endif %}>Tạm dừng</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-widest mb-2">Mức lương tối thiểu</label>
+                    <input type="number" name="salary_min" value="{{ job.salary_min if job and job.salary_min else '' }}" class="w-full px-4 py-2.5 rounded-lg border-slate-200 focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm font-medium">
+                </div>
+                
+                <div class="flex gap-2">
+                    <div class="flex-1">
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-widest mb-2">Mức lương tối đa</label>
+                        <input type="number" name="salary_max" value="{{ job.salary_max if job and job.salary_max else '' }}" class="w-full px-4 py-2.5 rounded-lg border-slate-200 focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm font-medium">
+                    </div>
+                    <div class="w-24">
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-widest mb-2">Tiền tệ</label>
+                        <select name="salary_currency" class="w-full px-4 py-2.5 rounded-lg border-slate-200 focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm font-medium">
+                            <option value="VND" {% if not job or job.salary_currency == 'VND' %}selected{% endif %}>VND</option>
+                            <option value="USD" {% if job and job.salary_currency == 'USD' %}selected{% endif %}>USD</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-5">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-widest mb-2">Số lượng</label>
+                        <input type="number" name="quantity" value="{{ job.quantity if job and job.quantity else 1 }}" min="1" class="w-full px-4 py-2.5 rounded-lg border-slate-200 focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm font-medium">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-widest mb-2">Học vấn</label>
+                        <select name="education_level" class="w-full px-4 py-2.5 rounded-lg border-slate-200 focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm font-medium">
+                            <option value="">Không yêu cầu</option>
+                            <option value="highschool" {% if job and job.education_level == 'highschool' %}selected{% endif %}>Trung học phổ thông</option>
+                            <option value="college" {% if job and job.education_level == 'college' %}selected{% endif %}>Trung cấp / Cao đẳng</option>
+                            <option value="bachelor" {% if job and job.education_level == 'bachelor' %}selected{% endif %}>Cử nhân / Đại học</option>
+                            <option value="master" {% if job and job.education_level == 'master' %}selected{% endif %}>Thạc sĩ</option>
+                            <option value="phd" {% if job and job.education_level == 'phd' %}selected{% endif %}>Tiến sĩ</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-widest mb-2">Cấp bậc</label>
+                        <select name="experience_level" class="w-full px-4 py-2.5 rounded-lg border-slate-200 focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm font-medium">
+                            <option value="">Không yêu cầu</option>
+                            <option value="intern" {% if job and job.experience_level == 'intern' %}selected{% endif %}>Thực tập sinh (Intern)</option>
+                            <option value="fresher" {% if job and job.experience_level == 'fresher' %}selected{% endif %}>Dưới 1 năm (Fresher)</option>
+                            <option value="junior" {% if job and job.experience_level == 'junior' %}selected{% endif %}>1 - 3 năm (Junior)</option>
+                            <option value="mid" {% if job and job.experience_level == 'mid' %}selected{% endif %}>3 - 5 năm (Mid-level)</option>
+                            <option value="senior" {% if job and job.experience_level == 'senior' %}selected{% endif %}>Trên 5 năm (Senior)</option>
+                            <option value="lead" {% if job and job.experience_level == 'lead' %}selected{% endif %}>Quản lý (Lead)</option>
+                            <option value="manager" {% if job and job.experience_level == 'manager' %}selected{% endif %}>Giám đốc (Manager)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-widest mb-3">Kỹ năng yêu cầu</label>
+                    
+                    {% set job_skill_ids = [] %}
+                    {% if job and job.skills %}
+                        {% for js in job.skills %}
+                            {% set _ = job_skill_ids.append(js.skill_id) %}
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <div x-data="{
+                            open: false,
+                            search: '',
+                            selected: {{ job_skill_ids | tojson }},
+                            skills: [
+                                {% for skill in skills %}
+                                    { id: {{ skill.id }}, name: '{{ skill.name }}' }{{ ',' if not loop.last }}
+                                {% endfor %}
+                            ],
+                            get filteredSkills() {
+                                if (this.search === '') {
+                                    return this.skills;
+                                }
+                                return this.skills.filter(s => s.name.toLowerCase().includes(this.search.toLowerCase()));
+                            },
+                            get selectedSkills() {
+                                return this.skills.filter(s => this.selected.includes(s.id));
+                            },
+                            toggleSkill(id) {
+                                if (this.selected.includes(id)) {
+                                    this.selected = this.selected.filter(i => i !== id);
+                                } else {
+                                    this.selected.push(id);
+                                }
+                            },
+                            removeSkill(id) {
+                                this.selected = this.selected.filter(i => i !== id);
+                            }
+                        }"
+                        class="relative"
+                        @click.away="open = false"
+                    >
+                        <!-- Thẻ hiện tại (Tags) -->
+                        <div class="flex flex-wrap gap-2 mb-2 min-h-[42px] p-2 bg-slate-50 border border-slate-200 rounded-lg" @click="open = !open">
+                            <template x-for="skill in selectedSkills" :key="skill.id">
+                                <span class="inline-flex items-center gap-1 px-2.5 py-1 bg-primary/10 text-primary text-xs font-bold rounded-md">
+                                    <span x-text="skill.name"></span>
+                                    <button type="button" @click.stop="removeSkill(skill.id)" class="text-primary hover:text-primary/70 focus:outline-none">
+                                        <span class="material-symbols-outlined text-[14px]">close</span>
+                                    </button>
+                                </span>
+                            </template>
+                            <span x-show="selected.length === 0" class="text-slate-400 text-sm py-1 px-2">Chọn kỹ năng...</span>
+                            
+                            <!-- Hidden inputs để form HTMX có thể lấy danh sách skill_ids -->
+                            <template x-for="id in selected" :key="id">
+                                <input type="hidden" name="skill_ids" :value="id">
+                            </template>
+                        </div>
+                        
+                        <!-- Dropdown -->
+                        <div x-show="open" 
+                             x-transition
+                             class="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-xl overflow-hidden"
+                             style="display: none;">
+                            <!-- Search box -->
+                            <div class="p-2 border-b border-slate-100 bg-slate-50">
+                                <div class="relative">
+                                    <span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm">search</span>
+                                    <input x-model="search" type="text" placeholder="Tìm kỹ năng..." class="w-full pl-8 pr-3 py-1.5 text-sm rounded border-slate-200 focus:ring-primary focus:border-primary" @keydown.enter.prevent="">
+                                </div>
+                            </div>
+                            
+                            <!-- List -->
+                            <ul class="max-h-48 overflow-y-auto p-1">
+                                <template x-for="skill in filteredSkills" :key="skill.id">
+                                    <li>
+                                        <label class="flex items-center gap-3 px-3 py-2 hover:bg-slate-50 rounded cursor-pointer transition-colors"
+                                               :class="{ 'bg-primary/5': selected.includes(skill.id) }">
+                                            <input type="checkbox" 
+                                                   class="w-4 h-4 text-primary rounded border-slate-300 focus:ring-primary"
+                                                   :value="skill.id" 
+                                                   :checked="selected.includes(skill.id)" 
+                                                   @change="toggleSkill(skill.id)">
+                                            <span class="text-sm font-medium" :class="selected.includes(skill.id) ? 'text-primary' : 'text-slate-700'" x-text="skill.name"></span>
+                                        </label>
+                                    </li>
+                                </template>
+                                <li x-show="filteredSkills.length === 0" class="px-3 py-4 text-center text-sm text-slate-500">
+                                    Không tìm thấy kỹ năng nào.
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-widest mb-2">Mô tả công việc</label>
+                    <textarea name="description" rows="4" class="w-full px-4 py-2.5 rounded-lg border-slate-200 focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm font-medium">{{ job.description if job else '' }}</textarea>
+                </div>
+
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-widest mb-2">Yêu cầu công việc</label>
+                    <textarea name="requirements" rows="4" class="w-full px-4 py-2.5 rounded-lg border-slate-200 focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm font-medium">{{ job.requirements if job else '' }}</textarea>
+                </div>
+
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-widest mb-2">Quyền lợi & Phúc lợi</label>
+                    <textarea name="benefits" rows="4" class="w-full px-4 py-2.5 rounded-lg border-slate-200 focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm font-medium">{{ job.benefits if job else '' }}</textarea>
+                </div>
+            </div>
+            
+            <div class="mt-8 flex items-center justify-end gap-3 pt-5 border-t border-slate-100">
+                <button type="button" onclick="document.getElementById('modal-container').innerHTML=''" class="px-5 py-2.5 rounded-lg border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 transition-colors text-sm">
+                    Hủy bỏ
+                </button>
+                <button type="submit" class="px-5 py-2.5 rounded-lg bg-primary text-white font-bold hover:shadow-lg hover:shadow-primary/25 transition-all active:scale-95 text-sm flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[18px]">save</span>
+                    Lưu công việc
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

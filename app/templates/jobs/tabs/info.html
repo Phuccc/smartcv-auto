@@ -1,0 +1,211 @@
+<div class="bg-card-white rounded-3xl border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] p-8 mb-10 overflow-hidden relative">
+    <!-- Decorative background element -->
+    <div class="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-bl-full pointer-events-none -mr-10 -mt-10"></div>
+    
+    <div class="flex flex-col md:flex-row justify-between items-start mb-8 relative z-10 gap-6">
+        <div>
+            <div class="flex flex-wrap items-center gap-3 mb-4">
+                <span class="px-3 py-1.5 bg-primary/10 text-primary text-xs font-black rounded-lg uppercase tracking-wider border border-primary/20 shadow-sm">{{ job.department.name if job.department else "Chưa phân bổ" }}</span>
+                {% if job.status == 'open' %}
+                    <span class="px-3 py-1.5 bg-green-50 text-green-700 text-xs font-bold rounded-lg flex items-center gap-1.5 border border-green-200"><span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> Đang hiển thị</span>
+                {% elif job.status == 'closed' %}
+                    <span class="px-3 py-1.5 bg-red-50 text-red-700 text-xs font-bold rounded-lg flex items-center gap-1.5 border border-red-200"><span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> Đã đóng</span>
+                {% else %}
+                    <span class="px-3 py-1.5 bg-orange-50 text-orange-700 text-xs font-bold rounded-lg flex items-center gap-1.5 border border-orange-200"><span class="w-1.5 h-1.5 rounded-full bg-orange-500"></span> Tạm dừng</span>
+                {% endif %}
+            </div>
+            
+            <h3 class="text-[28px] md:text-[34px] font-black text-slate-900 tracking-tight leading-tight">{{ job.title }}</h3>
+            <div class="mt-4">
+                <button hx-get="/ui/jobs/form/{{ job.id }}?context=detail" hx-target="#modal-container" hx-swap="innerHTML" class="inline-flex items-center gap-2 px-6 py-2 rounded-xl bg-primary text-white text-xs font-bold hover:shadow-lg hover:shadow-primary/20 transition-all active:scale-95 shadow-sm">
+                    <span class="material-symbols-outlined text-[18px]">edit</span> Chỉnh sửa thông tin
+                </button>
+            </div>
+            
+            <div class="flex flex-wrap items-center gap-5 mt-4 text-slate-500 font-medium text-sm">
+                <span class="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100 shadow-sm text-slate-700"><span class="material-symbols-outlined text-[18px] text-slate-400">location_on</span> {{ job.branch.name if job.branch else "Trụ sở chính" }}</span>
+                <span class="flex items-center gap-1.5 bg-green-50 px-3 py-1.5 rounded-lg border border-green-100 shadow-sm text-green-700 font-bold"><span class="material-symbols-outlined text-[18px] text-green-600">payments</span> 
+                    {% if job.salary_min and job.salary_max %}
+                        {{ "{:,}".format(job.salary_min) }} - {{ "{:,}".format(job.salary_max) }} {{ job.salary_currency }}
+                    {% elif job.salary_min %}
+                        Từ {{ "{:,}".format(job.salary_min) }} {{ job.salary_currency }}
+                    {% elif job.salary_max %}
+                        Lên đến {{ "{:,}".format(job.salary_max) }} {{ job.salary_currency }}
+                    {% else %}
+                        Mức lương thương lượng
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+        
+        <div class="text-left md:text-right flex flex-col md:items-end p-5 bg-orange-50/50 rounded-2xl border border-orange-100 min-w-[200px]">
+            <p class="text-[10px] font-black text-primary uppercase tracking-widest mb-2 flex items-center gap-1 justify-end"><span class="material-symbols-outlined text-[14px]">person_add</span> Cần tuyển</p>
+            <div class="flex items-baseline gap-1.5">
+                <span class="text-4xl font-black text-slate-900 tracking-tighter">{{ '%02d' | format(job.quantity if job.quantity else 1) }}</span>
+                <span class="text-sm font-bold text-slate-500">Người</span>
+            </div>
+            <div class="mt-3 w-full bg-white h-2 rounded-full overflow-hidden border border-slate-200">
+                {% set hired_count = job.candidates | selectattr('status', 'equalto', 'đã tuyển') | list | length %}
+                {% set progress = (hired_count / job.quantity * 100) if job.quantity else 0 %}
+                {% set progress_clamped = progress if progress <= 100 else 100 %}
+                <div class="bg-primary h-full rounded-full" style="width: {{ progress_clamped }}%;"></div>
+            </div>
+            <p class="text-[10px] font-bold text-slate-400 mt-2 flex justify-between w-full"><span>Tiến độ (Đã nhận việc)</span> <span>{{ hired_count }}/{{ job.quantity if job.quantity else 1 }}</span></p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-6 p-6 bg-slate-50/80 rounded-2xl border border-slate-100 relative z-10 shadow-sm">
+        <div class="space-y-1.5">
+            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5"><span class="material-symbols-outlined text-[14px]">school</span> Học vấn</p>
+            <p class="text-sm font-bold text-slate-800">
+                {% if job.education_level == 'highschool' %} Trung học phổ thông
+                {% elif job.education_level == 'college' %} Trung cấp / Cao đẳng
+                {% elif job.education_level == 'bachelor' %} Cử nhân / Đại học
+                {% elif job.education_level == 'master' %} Thạc sĩ
+                {% elif job.education_level == 'phd' %} Tiến sĩ
+                {% else %} Không yêu cầu {% endif %}
+            </p>
+        </div>
+        <div class="space-y-1.5 border-l border-slate-200/60 pl-6">
+            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5"><span class="material-symbols-outlined text-[14px]">military_tech</span> Kinh nghiệm</p>
+            <p class="text-sm font-bold text-slate-800">
+                {% if job.experience_level == 'intern' %} Thực tập sinh
+                {% elif job.experience_level == 'fresher' %} Dưới 1 năm
+                {% elif job.experience_level == 'junior' %} 1 - 3 năm
+                {% elif job.experience_level == 'mid' %} 3 - 5 năm
+                {% elif job.experience_level == 'senior' %} Trên 5 năm
+                {% elif job.experience_level == 'lead' %} Quản lý / Lead
+                {% elif job.experience_level == 'manager' %} Giám đốc
+                {% else %} Không yêu cầu {% endif %}
+            </p>
+        </div>
+        <div class="space-y-1.5 border-l border-slate-200/60 pl-6 hidden lg:block">
+            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5"><span class="material-symbols-outlined text-[14px]">schedule</span> Hình thức</p>
+            <p class="text-sm font-bold text-slate-800">Toàn thời gian</p>
+        </div>
+        <div class="space-y-1.5 border-l border-slate-200/60 pl-6">
+            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5"><span class="material-symbols-outlined text-[14px]">group</span> Đã có hồ sơ</p>
+            <div class="flex items-center gap-2.5">
+                {% if job.candidates %}
+                <div class="flex -space-x-2.5">
+                    {% for cand in job.candidates[:3] %}
+                        <div class="w-7 h-7 rounded-full bg-slate-200 border-2 border-white flex items-center justify-center text-[9px] font-bold text-slate-600 shadow-sm">{{ cand.full_name[:1] | upper }}</div>
+                    {% endfor %}
+                    {% if job.candidates|length > 3 %}
+                        <div class="w-7 h-7 rounded-full bg-slate-100 border-2 border-white flex items-center justify-center text-[9px] font-bold text-slate-500 shadow-sm">+{{ job.candidates|length - 3 }}</div>
+                    {% endif %}
+                </div>
+                {% endif %}
+                <span class="text-sm font-bold text-slate-800">{{ job.candidates|length if job.candidates else 0 }} ứng viên</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-10 mb-12 items-start">
+    <div class="lg:col-span-7 space-y-10">
+        <!-- Mô tả công việc -->
+        <section class="bg-card-white rounded-3xl border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] p-10">
+            <h4 class="text-sm font-black text-slate-900 uppercase tracking-widest mb-8 flex items-center gap-2">
+                <span class="w-1 h-5 bg-primary rounded-full"></span> Mô tả công việc
+            </h4>
+            <div class="space-y-6 text-[14px] leading-relaxed text-slate-600 font-medium">
+                {% if job.description %}
+                    <p>{{ job.description | replace('\n', '<br>') | safe }}</p>
+                {% else %}
+                    <p class="italic text-slate-400">Chưa có thông tin mô tả chi tiết cho công việc này.</p>
+                {% endif %}
+            </div>
+        </section>
+
+        <!-- Phúc lợi -->
+        <section class="bg-card-white rounded-3xl border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] p-10">
+            <h4 class="text-sm font-black text-slate-900 uppercase tracking-widest mb-8 flex items-center gap-2">
+                <span class="w-1 h-5 bg-primary rounded-full"></span> Quyền lợi & Phúc lợi
+            </h4>
+            <div class="space-y-6 text-[14px] leading-relaxed text-slate-600 font-medium">
+                {% if job.benefits %}
+                    <p>{{ job.benefits | replace('\n', '<br>') | safe }}</p>
+                {% else %}
+                    <p class="italic text-slate-400 flex flex-col gap-2">
+                        <span>• Lương thưởng cạnh tranh trên thị trường.</span>
+                        <span>• Đầy đủ các chế độ bảo hiểm theo quy định.</span>
+                        <span>• Chế độ review lương định kỳ hàng năm.</span>
+                    </p>
+                {% endif %}
+            </div>
+        </section>
+    </div>
+
+    <div class="lg:col-span-5">
+        <!-- Yêu cầu -->
+        <section class="bg-card-white rounded-3xl border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] p-10 sticky top-8">
+            <h4 class="text-sm font-black text-slate-900 uppercase tracking-widest mb-8 flex items-center gap-2">
+                <span class="w-1 h-5 bg-primary rounded-full"></span> Yêu cầu & Kỹ năng
+            </h4>
+            <div class="space-y-8">
+                <div>
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Kỹ năng chuyên môn</p>
+                    <div class="flex flex-wrap gap-2">
+                        {% if job.skills %}
+                            {% for ds in job.skills %}
+                                <span class="px-4 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-600">{{ ds.skill.name }}</span>
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-[13px] italic text-slate-500 font-medium">Chưa yêu cầu kỹ năng cụ thể</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-6">
+                    <div>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Kinh nghiệm</p>
+                        <p class="text-sm font-bold text-slate-800">
+                            {% if job.experience_level == 'intern' %} Thực tập sinh
+                            {% elif job.experience_level == 'fresher' %} Dưới 1 năm
+                            {% elif job.experience_level == 'junior' %} 1 - 3 năm
+                            {% elif job.experience_level == 'mid' %} 3 - 5 năm
+                            {% elif job.experience_level == 'senior' %} Trên 5 năm
+                            {% elif job.experience_level == 'lead' %} Quản lý / Lead
+                            {% elif job.experience_level == 'manager' %} Giám đốc
+                            {% else %} Không yêu cầu {% endif %}
+                        </p>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Cấp bậc</p>
+                        <p class="text-sm font-bold text-slate-800">
+                            {{ job.experience_level | capitalize if job.experience_level else 'Nhân viên' }}
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="pt-8 border-t border-slate-50">
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Thông tin chung</p>
+                    <div class="text-[13px] text-slate-500 leading-relaxed font-medium">
+                        {% if job.requirements %}
+                            <p>{{ job.requirements | replace('\n', '<br>') | safe }}</p>
+                        {% else %}
+                            <p class="italic">Chưa có thông tin yêu cầu cụ thể.</p>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="mt-4 p-5 bg-slate-50 rounded-2xl border border-slate-100">
+                    <div class="flex justify-between items-center mb-1.5">
+                        <span class="text-xs font-bold text-slate-600 tracking-tight">Trạng thái tin đăng</span>
+                        {% if job.status == 'open' %}
+                            <span class="text-[10px] font-black text-green-600 bg-green-100 px-2 py-0.5 rounded uppercase">Đang hiển thị</span>
+                        {% elif job.status == 'closed' %}
+                            <span class="text-[10px] font-black text-red-600 bg-red-100 px-2 py-0.5 rounded uppercase">Đã đóng</span>
+                        {% else %}
+                            <span class="text-[10px] font-black text-orange-600 bg-orange-100 px-2 py-0.5 rounded uppercase">Trạng thái ẩn</span>
+                        {% endif %}
+                    </div>
+                    <p class="text-[11px] font-medium text-slate-400">
+                        Đăng ngày: {{ job.created_at.strftime('%d/%m/%Y') if job.created_at else 'N/A' }}
+                    </p>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>

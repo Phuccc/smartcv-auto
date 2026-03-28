@@ -1,0 +1,53 @@
+<tr class="hover:bg-slate-50/80 transition-colors group" id="user-row-{{ user.id }}">
+    <td class="text-center">
+        <span class="text-xs font-bold text-slate-400">{{ loop_index + 1 }}</span>
+    </td>
+    <td>
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-full bg-slate-100 overflow-hidden shrink-0 border border-slate-200 flex items-center justify-center">
+                {% if user.avatar_url %}
+                <img src="{{ user.avatar_url }}" class="w-full h-full object-cover" alt="User Avatar">
+                {% else %}
+                <img src="https://ui-avatars.com/api/?name={{ user.full_name | urlencode }}&background=f1f5f9&color=64748b&size=64" 
+                     class="w-full h-full object-cover" alt="User Avatar">
+                {% endif %}
+            </div>
+            <span class="font-bold text-slate-900 text-sm">{{ user.full_name }}</span>
+        </div>
+    </td>
+    <td>
+        <span class="text-sm font-medium text-slate-600">{{ user.email }}</span>
+    </td>
+    <td>
+        {% if roles_dict and user.role in roles_dict %}
+            {% set r_obj = roles_dict[user.role] %}
+            <span class="inline-flex items-center px-2 py-1 rounded text-xs font-bold 
+                {% if r_obj.is_system %}bg-purple-50 text-purple-700 border border-purple-200{% else %}bg-slate-100 text-slate-700 border border-slate-200{% endif %}">
+                {{ r_obj.display_name }}
+            </span>
+        {% else %}
+            <span class="inline-flex items-center px-2 py-1 rounded text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200">{{ user.role }}</span>
+        {% endif %}
+    </td>
+    <td>
+        {% if user.is_active %}
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-green-50 text-green-700 border border-green-200">
+                <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> Hoạt động
+            </span>
+        {% else %}
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-50 text-slate-600 border border-slate-200">
+                <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span> Đã khóa
+            </span>
+        {% endif %}
+    </td>
+    <td class="text-right pr-6">
+        <div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button hx-get="/ui/users/form/{{ user.id }}" hx-target="#modal-container" hx-swap="innerHTML" class="text-slate-400 hover:text-primary p-2 rounded-lg hover:bg-primary/10 transition-colors" title="Chỉnh sửa">
+                <span class="material-symbols-outlined text-[20px]">edit</span>
+            </button>
+            <button hx-delete="/ui/users/{{ user.id }}" hx-confirm="Bạn có chắc chắn muốn xoá người dùng này?" hx-target="#user-row-{{ user.id }}" hx-swap="outerHTML" class="text-slate-400 hover:text-red-500 p-2 rounded-lg hover:bg-red-50 transition-colors" title="Xoá">
+                <span class="material-symbols-outlined text-[20px]">delete</span>
+            </button>
+        </div>
+    </td>
+</tr>

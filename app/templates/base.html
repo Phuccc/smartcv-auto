@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>{% block title %}SmartCV Auto | RecruitFlow{% endblock %}</title>
+    <!-- Tailwind CSS (CDN for UI design) -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <!-- Fonts & Icons -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="icon" href="data:,">
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              primary: "#a54a0d",
+              "warm-bg": "#F7F3E9",
+              "sidebar-bg": "#FFFFFF",
+              "card-white": "#FFFFFF",
+              sage: "#8da399",
+              terracotta: "#c66b56",
+            },
+            fontFamily: {
+              display: ["Inter", "sans-serif"],
+            },
+            borderRadius: {
+              DEFAULT: "0.375rem",
+              lg: "0.625rem",
+              xl: "1rem",
+              full: "9999px",
+            },
+          },
+        },
+      };
+    </script>
+    <style type="text/tailwindcss">
+      @layer base {
+        body {
+          font-family: "Inter", sans-serif;
+        }
+      }
+      .sidebar-fixed {
+        width: 260px;
+        min-width: 260px;
+        border-right: 1px solid #e5e7eb;
+      }
+      .data-table-container {
+        max-height: calc(100vh - 380px);
+        overflow-y: auto;
+      }
+      th {
+        position: sticky;
+        top: 0;
+        background-color: #f8fafc;
+        z-index: 10;
+        padding-top: 0.75rem;
+        padding-bottom: 0.75rem;
+        padding-left: 1rem;
+        padding-right: 1rem;
+        text-align: left;
+        font-size: 0.75rem;
+        line-height: 1rem;
+        font-weight: 700;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        border-bottom-width: 1px;
+        border-color: #e2e8f0;
+      }
+      td {
+        padding-top: 0.75rem;
+        padding-bottom: 0.75rem;
+        padding-left: 1rem;
+        padding-right: 1rem;
+        font-size: 0.875rem;
+        line-height: 1.25rem;
+        border-bottom-width: 1px;
+        border-color: #f1f5f9;
+        vertical-align: middle;
+      }
+      .bulk-actions-toolbar {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        background-color: #ffffff;
+        border-bottom-width: 1px;
+        border-color: #e2e8f0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-left: 1.5rem;
+        padding-right: 1.5rem;
+        padding-top: 0.75rem;
+        padding-bottom: 0.75rem;
+      }
+      .custom-checkbox {
+        width: 1rem;
+        height: 1rem;
+        border-radius: 0.25rem;
+        color: #a54a0d;
+        border-color: #cbd5e1;
+      }
+      .custom-checkbox:focus {
+        --tw-ring-color: rgb(165 74 13 / 0.2);
+      }
+      /* HTMX Loading Indicator */
+      .htmx-indicator {
+        display: none;
+      }
+      .htmx-request .htmx-indicator {
+        display: inline-block;
+      }
+      .htmx-request.htmx-indicator {
+        display: inline-block;
+      }
+      .htmx-request .htmx-indicator-none {
+        display: none;
+      }
+      [x-cloak] { display: none !important; }
+    </style>
+    {% block extra_head %}{% endblock %}
+  </head>
+  <body class="bg-warm-bg font-display text-slate-900" hx-boost="true">
+    <div class="flex h-screen overflow-hidden">
+      <!-- Sidebar -->
+      <aside
+        class="sidebar-fixed h-full flex flex-col justify-between p-6 bg-sidebar-bg shrink-0"
+      >
+        <div class="flex flex-col gap-8">
+          <div class="flex items-center gap-3">
+            <div
+              class="w-10 h-10 rounded-lg bg-primary flex items-center justify-center text-white shadow-lg shadow-primary/20"
+            >
+              <span class="material-symbols-outlined">hub</span>
+            </div>
+            <div>
+              <h1
+                class="text-slate-900 font-bold text-lg leading-tight tracking-tight"
+              >
+                RecruitFlow
+              </h1>
+              <p
+                class="text-primary text-[10px] font-bold uppercase tracking-widest"
+              >
+                HR Tech Admin
+              </p>
+            </div>
+          </div>
+          <nav class="flex flex-col gap-1.5" id="nav-menu">
+            <a
+              href="/ui/dashboard"
+              class="cursor-pointer flex items-center gap-3 px-3 py-2.5 text-slate-600 hover:bg-slate-50 hover:text-primary rounded-lg transition-all"
+            >
+              <span class="material-symbols-outlined text-xl">dashboard</span>
+              <span class="text-sm font-medium">Bảng điều khiển</span>
+            </a>
+            <a
+              href="/ui/jobs"
+              class="cursor-pointer flex items-center gap-3 px-3 py-2.5 text-slate-600 hover:bg-slate-50 hover:text-primary rounded-lg transition-all"
+            >
+              <span class="material-symbols-outlined text-xl">work</span>
+              <span class="text-sm font-bold">Tuyển dụng</span>
+            </a>
+            <a
+              href="/ui/candidates"
+              class="cursor-pointer flex items-center gap-3 px-3 py-2.5 text-slate-600 hover:bg-slate-50 hover:text-primary rounded-lg transition-all"
+            >
+              <span class="material-symbols-outlined text-xl">group</span>
+              <span class="text-sm font-medium">Ứng viên</span>
+            </a>
+            <a
+              href="/ui/interviews"
+              class="cursor-pointer flex items-center gap-3 px-3 py-2.5 text-slate-600 hover:bg-slate-50 hover:text-primary rounded-lg transition-all"
+            >
+              <span class="material-symbols-outlined text-xl"
+                >calendar_today</span
+              >
+              <span class="text-sm font-medium">Phỏng vấn</span>
+            </a>
+            
+            {% if request.state.user and request.state.user.role == 'admin' %}
+            <a
+              href="/ui/categories"
+              class="cursor-pointer flex items-center gap-3 px-3 py-2.5 text-slate-600 hover:bg-slate-50 hover:text-primary rounded-lg transition-all"
+            >
+              <span class="material-symbols-outlined text-xl">category</span>
+              <span class="text-sm font-medium">Danh mục</span>
+            </a>
+            <a
+              href="/ui/users"
+              class="cursor-pointer flex items-center gap-3 px-3 py-2.5 text-slate-600 hover:bg-slate-50 hover:text-primary rounded-lg transition-all"
+            >
+              <span class="material-symbols-outlined text-xl">manage_accounts</span>
+              <span class="text-sm font-medium">Người dùng</span>
+            </a>
+            {% endif %}
+
+            {% if request.state.user %}
+            <a
+              class="flex items-center gap-3 px-3 py-2.5 text-slate-600 hover:bg-slate-50 hover:text-primary rounded-lg transition-all"
+              href="/ui/settings"
+            >
+              <span class="material-symbols-outlined text-xl">settings</span>
+              <span class="text-sm font-medium">Cài đặt</span>
+            </a>
+            {% endif %}
+          </nav>
+        </div>
+
+        <div class="flex flex-col gap-4">
+          <div class="px-2 pb-4 border-t border-slate-100 mt-auto pt-3">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="w-10 h-10 rounded-full bg-slate-100 overflow-hidden shrink-0 border border-slate-200 flex items-center justify-center">
+                {% if request.state.user and request.state.user.avatar_url %}
+                <img src="{{ request.state.user.avatar_url }}" class="w-full h-full object-cover" alt="User Avatar">
+                {% else %}
+                <img src="https://ui-avatars.com/api/?name={{ (request.state.user.full_name if request.state.user else 'Khách') | urlencode }}&background=f1f5f9&color=64748b&size=64" 
+                     class="w-full h-full object-cover" alt="User Avatar">
+                {% endif %}
+              </div>
+              <div class="overflow-hidden">
+                <p class="text-sm font-bold text-slate-900 truncate">
+                  {{ request.state.user.full_name if request.state.user else "Khách" }}
+                </p>
+                <p class="text-[11px] font-medium text-slate-500 truncate capitalize">
+                  {{ request.state.user.role if request.state.user else "" }}
+                </p>
+              </div>
+            </div>
+            
+            <!-- Đăng xuất Button -->
+            <a href="/ui/auth/logout" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors">
+              <span class="material-symbols-outlined text-lg">logout</span>
+              Đăng xuất
+            </a>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Main Content Area -->
+      <main class="flex-1 overflow-y-auto h-screen bg-warm-bg" id="main-content">
+        {% block content %} {% endblock %}
+      </main>
+    </div>
+
+    <!-- Modal Container cho HTMX -->
+    <div id="modal-container"></div>
+
+    <script>
+      /**
+       * Smart navigation "Back" function
+       */
+      function smartBack(fallbackUrl) {
+        if (document.referrer && document.referrer.includes(window.location.host)) {
+          history.back();
+        } else {
+          window.location.href = fallbackUrl || '/ui/dashboard';
+        }
+      }
+
+      /**
+       * Highlight active sidebar item based on current URL
+       */
+      function highlightSidebar() {
+        const currentPath = window.location.pathname;
+        const navLinks = document.querySelectorAll('#nav-menu a');
+        
+        navLinks.forEach(link => {
+          const href = link.getAttribute('href');
+          if (!href || href === '#') return;
+
+          // Dashboard logic (exact match only for dashboard)
+          let isActive = false;
+          if (href === '/ui/dashboard') {
+            isActive = (currentPath === href);
+          } else if (href === '/ui/settings') {
+            // Cài đặt chỉ active khi đúng là /ui/settings hoặc các trang con của nó
+            isActive = (currentPath === href || currentPath.startsWith(href + '/'));
+          } else {
+            // Match if path starts with href (e.g. /ui/jobs/detail matches /ui/jobs)
+            isActive = (currentPath === href || currentPath.startsWith(href + '/'));
+          }
+
+          if (isActive) {
+            link.classList.add('bg-primary/5', 'text-primary', 'font-bold', 'shadow-sm');
+            link.classList.remove('text-slate-600');
+            const icon = link.querySelector('.material-symbols-outlined');
+            if (icon) icon.classList.add('fill-icon');
+          } else {
+            link.classList.remove('bg-primary/5', 'text-primary', 'font-bold', 'shadow-sm');
+            link.classList.add('text-slate-600');
+            const icon = link.querySelector('.material-symbols-outlined');
+            if (icon) icon.classList.remove('fill-icon');
+          }
+        });
+      }
+
+      // Initialize on load and after htmx swaps
+      window.addEventListener('load', highlightSidebar);
+      document.addEventListener('DOMContentLoaded', highlightSidebar);
+      document.addEventListener('htmx:afterSwap', highlightSidebar);
+    </script>
+    <style>
+      .fill-icon {
+        font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24 !important;
+      }
+    </style>
+  </body>
+</html>
