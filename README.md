@@ -18,7 +18,7 @@ _Giảm thời gian sàng lọc thủ công, nâng cao tính khách quan và t�
 
 ---
 
-https://github.com/user-attachments/assets/b16c68a9-5625-47de-8f24-b6ba68a2efc5
+https://github.com/user-attachments/assets/178d08a6-ae6d-42b7-9225-4f9631d3f669
 
 ## ✨ Tính Năng Nổi Bật (Key Features)
 
